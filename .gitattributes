@@ -1,0 +1,30 @@
+# Normalise line endings so Godot's text formats diff cleanly across machines.
+* text=auto eol=lf
+
+# Godot text formats
+*.gd    text eol=lf
+*.tscn  text eol=lf
+*.tres  text eol=lf
+*.godot text eol=lf
+*.import text eol=lf
+*.cfg   text eol=lf
+
+# Windows scripts keep CRLF
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+
+# Binary assets. When the art/audio volume grows, move these to Git LFS
+# (git lfs track "*.png" etc.) instead of storing them directly.
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.svg  text
+*.ogg  binary
+*.wav  binary
+*.mp3  binary
+*.ttf  binary
+*.otf  binary
+*.glb  binary
+*.blend binary
+*.res  binary
+*.scn  binary

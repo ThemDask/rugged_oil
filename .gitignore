@@ -1,0 +1,19 @@
+# Godot editor/import cache (regenerated automatically). Keep *.import sidecars committed.
+.godot/
+/build/
+/exports/
+
+# Godot mono/C# leftovers, in case they ever appear
+.mono/
+data_*/
+
+# OS / editor noise
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.tmp
+*~
+
+# Personal, machine-specific Claude notes and settings
+CLAUDE.local.md
+.claude/settings.local.json

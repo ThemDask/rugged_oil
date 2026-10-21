@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="UnitDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/defs/unit_def.gd" id="1_unit"]
+
+[resource]
+script = ExtResource("1_unit")
+id = &"b_worker"
+faction = &"faction_b"
+display_name = "Worker"
+tags = Array[StringName]([&"worker", &"light"])
+cost = Dictionary[StringName, int]({
+&"gold": 50
+})
+build_time = 12.0
+requires = Array[StringName]([&"b_hq"])
+max_health = 60
+sight_range = 7.0
+move_speed = 4.0
+supply = 1

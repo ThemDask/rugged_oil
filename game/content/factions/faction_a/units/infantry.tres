@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="UnitDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/defs/unit_def.gd" id="1_unit"]
+[ext_resource type="Script" path="res://core/defs/weapon_def.gd" id="2_weapon"]
+
+[sub_resource type="Resource" id="Resource_rifle"]
+script = ExtResource("2_weapon")
+display_name = "Rifle"
+damage = 8
+range = 6.0
+cooldown = 1.0
+
+[resource]
+script = ExtResource("1_unit")
+id = &"a_infantry"
+faction = &"faction_a"
+display_name = "Infantry"
+tags = Array[StringName]([&"infantry", &"light"])
+cost = Dictionary[StringName, int]({
+&"gold": 75
+})
+build_time = 15.0
+requires = Array[StringName]([&"a_hq"])
+max_health = 100
+sight_range = 8.0
+weapons = Array[ExtResource("2_weapon")]([SubResource("Resource_rifle")])
+move_speed = 4.5
+supply = 1

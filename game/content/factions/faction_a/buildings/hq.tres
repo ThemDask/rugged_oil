@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BuildingDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/defs/building_def.gd" id="1_building"]
+
+[resource]
+script = ExtResource("1_building")
+id = &"a_hq"
+faction = &"faction_a"
+display_name = "Headquarters"
+tags = Array[StringName]([&"structure", &"armored"])
+cost = Dictionary[StringName, int]({
+&"gold": 400
+})
+build_time = 60.0
+max_health = 1500
+armor = 2
+sight_range = 10.0
+footprint = Vector2i(4, 4)
+produces = Array[StringName]([&"a_worker", &"a_infantry"])
+provides_supply = 10
+is_dropoff = true
