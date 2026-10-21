@@ -32,7 +32,7 @@ obstacles without piling on one spot.
 - [x] **Selection system** (`systems/selection/`): click select, shift-add, drag-box, own units
       only, selection ring. Right-click issues a MoveCommand with spread-out targets so a group
       doesn't stack on one point.
-- [x] **Match scene stub** (`match/match.tscn`): builds a dev MatchConfig (human vs AI), loads the
+- [x] **Match scene stub** (`match/game_match.tscn`): builds a dev MatchConfig (human vs AI), loads the
       test map, and spawns each player's `starting_units` from their FactionDef at spawn points.
       Set as the run scene for now. The main menu comes in M7.
 - [x] **Tests:** tile/pixel conversion, camera clamping maths, selection-rectangle maths, group
