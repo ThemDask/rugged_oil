@@ -1,8 +1,18 @@
 # newRTS
 
-A 2-faction real-time strategy game built in **Godot 4.6 with GDScript**. Scope: skirmish matches
-the player configures (map, opponents, factions, teams) against AI. No campaign, no multiplayer for
-now, but the architecture deliberately keeps both possible (see `docs/architecture.md`).
+A 2-faction **space RTS**, **top-down 2D**, built in **Godot 4.6 with GDScript**. Scope: skirmish
+matches the player configures (map, opponents, factions, teams, pre-game customisation) against AI.
+No multiplayer, and a campaign is only a "maybe, later", but the architecture keeps both possible
+(see `docs/architecture.md`).
+
+Design pillars (details and open questions in `docs/design.md`):
+- **Slow, tactical, no APM race:** positioning, composition and choosing fights beat click speed.
+- **Strong asymmetry:** a fleet built around a huge mothership vs. slowly expanding aliens.
+- **Big size range:** the mothership is ~10× a corvette, and big ships turn slowly.
+- **Minimal visuals:** sharp-edged shapes, thin grey outlines. Art is code-drawn placeholders for now.
+
+The current faction content (`faction_a`/`faction_b`, workers, infantry, gold) is a **placeholder**
+from before the setting was chosen. Don't build on its specifics.
 
 ## Commands
 
@@ -46,6 +56,8 @@ game/                 the Godot project, res:// root
 
 1. **Data, not code, holds balance.** Unit/building/weapon/faction stats live in `game/content/*.tres`
    as typed Resources. Never hard-code a stat in a script. See `docs/data.md`.
+   **Data is in tiles, not pixels** (distances in tiles, speeds in tiles per second). Convert only
+   through `Tiles` (`core/tiles.gd`, 32 px per tile).
 2. **Cross-references use ids** (`StringName`, e.g. `&"a_worker"`), not resource paths. Ids are
    globally unique, lower_snake_case and prefixed per faction (`a_`, `b_`).
 3. **All game-state changes go through `Command` objects** (move, attack, build, train, ...). Player
@@ -82,6 +94,9 @@ game/                 the Godot project, res:// root
   move or rename a script or asset, move its sidecar with it (or do the move in the Godot editor).
 - `.tscn`/`.tres` are editable text. Keep `ext_resource` ids consistent. Godot adds `uid=` attributes
   when the file is next saved in the editor, which is fine.
+- Pathfinding is Godot's built-in navigation (NavigationServer2D, NavigationAgent2D with
+  avoidance). Maps bake their navmesh from StaticBody2D obstacles on load (`match/game_map.gd`).
+  Keep all movement going through `Unit.move_to()` so the navigation backend can change later.
 - Design questions (unit roles, faction identity, numbers) belong to the user: write them as
   open questions in `docs/design.md` instead of inventing answers.
 - Update `docs/` when a change alters architecture or data formats. Record significant decisions as
