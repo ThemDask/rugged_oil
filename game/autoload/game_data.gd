@@ -9,6 +9,7 @@ var rules: GameRules
 var _factions: Dictionary[StringName, FactionDef] = {}
 var _units: Dictionary[StringName, UnitDef] = {}
 var _buildings: Dictionary[StringName, BuildingDef] = {}
+var _maps: Dictionary[StringName, MapDef] = {}
 
 
 func _ready() -> void:
@@ -21,6 +22,7 @@ func load_all(root: String = CONTENT_ROOT) -> void:
 	_factions.clear()
 	_units.clear()
 	_buildings.clear()
+	_maps.clear()
 
 	for path in _find_resource_files(root):
 		var res := load(path)
@@ -34,11 +36,13 @@ func load_all(root: String = CONTENT_ROOT) -> void:
 			_register(_units, res, path)
 		elif res is BuildingDef:
 			_register(_buildings, res, path)
+		elif res is MapDef:
+			_register(_maps, res, path)
 
 
 ## Returns a list of human-readable problems with the loaded content (empty = valid).
 func validate() -> PackedStringArray:
-	return ContentValidator.validate(rules, _factions.values(), _units.values(), _buildings.values())
+	return ContentValidator.validate(rules, _factions.values(), _units.values(), _buildings.values(), _maps.values())
 
 
 func faction(id: StringName) -> FactionDef:
@@ -58,6 +62,14 @@ func entity(id: StringName) -> EntityDef:
 	if _units.has(id):
 		return _units[id]
 	return _buildings.get(id)
+
+
+func map(id: StringName) -> MapDef:
+	return _maps.get(id)
+
+
+func maps() -> Array[MapDef]:
+	return _maps.values()
 
 
 func factions() -> Array[FactionDef]:

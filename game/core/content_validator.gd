@@ -4,7 +4,7 @@ extends RefCounted
 ## so a bad edit to any .tres fails the tests with a readable message.
 
 
-static func validate(rules: GameRules, factions: Array, units: Array, buildings: Array) -> PackedStringArray:
+static func validate(rules: GameRules, factions: Array, units: Array, buildings: Array, maps: Array = []) -> PackedStringArray:
 	var problems := PackedStringArray()
 	if rules == null:
 		problems.append("No GameRules resource found (expected res://content/rules.tres).")
@@ -55,6 +55,18 @@ static func validate(rules: GameRules, factions: Array, units: Array, buildings:
 				problems.append("Building '%s': produces '%s', which is not a known unit." % [b.id, id])
 			elif e.faction != b.faction:
 				problems.append("Building '%s': produces '%s' from another faction." % [b.id, id])
+
+	for u: UnitDef in units:
+		if u.radius <= 0.0:
+			problems.append("Unit '%s': radius must be > 0." % u.id)
+
+	for m: MapDef in maps:
+		var where := "Map '%s'" % m.id
+		_check_name(problems, where, m.display_name)
+		if m.scene == null:
+			problems.append("%s: has no scene." % where)
+		if m.max_players < 2:
+			problems.append("%s: max_players must be at least 2." % where)
 
 	return problems
 

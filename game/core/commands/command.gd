@@ -19,6 +19,11 @@ func get_type() -> StringName:
 	return &""
 
 
+## Basic sanity checks that need no game state. Ownership is checked by the dispatcher.
+func is_valid() -> bool:
+	return player_id >= 0
+
+
 ## Serializable form for replays. Subclasses extend the dictionary with their own fields.
 func to_dict() -> Dictionary:
 	return {"type": get_type(), "player": player_id, "tick": tick}

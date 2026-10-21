@@ -15,7 +15,7 @@ content/
       units/*.tres              UnitDef (weapons embedded as WeaponDef sub-resources)
       buildings/*.tres          BuildingDef
     faction_b/ ...
-  maps/                         (later) MapDef + map scene per map
+  maps/<map>/map.tres           MapDef, pointing at the map scene next to it
 ```
 
 Folder placement is for humans. `GameData` scans `content/` recursively and classifies each file by
@@ -28,14 +28,25 @@ its class, so files can be moved around freely.
 | `GameRules` | `resource_types`, `starting_resources`, `supply_cap` |
 | `FactionDef` | `id`, `display_name`, `color`, `starting_units`, `starting_buildings` |
 | `EntityDef` (base) | `id`, `faction`, `display_name`, `cost`, `build_time`, `max_health`, `armor`, `sight_range`, `requires`, `tags`, `weapons`, `scene`, `icon` |
-| `UnitDef` | + `move_speed`, `supply` |
+| `UnitDef` | + `move_speed`, `radius`, `supply` |
 | `BuildingDef` | + `footprint`, `produces`, `provides_supply`, `is_dropoff` |
 | `WeaponDef` | `damage`, `range`, `cooldown`, `splash_radius`, `bonus_vs_tags` |
+| `MapDef` | `id`, `display_name`, `max_players`, `scene` (root uses the `GameMap` script) |
+
+## Making a map
+
+A map is a scene whose root uses `match/game_map.gd` (see `content/maps/test_map/`):
+
+- set `size_tiles` on the root;
+- add obstacles as `StaticBody2D` + `CollisionShape2D` (axis-aligned `RectangleShape2D`) anywhere
+  under `NavigationRegion2D`. Navigation is baked from them automatically on load;
+- add one `Marker2D` per player under `SpawnPoints`;
+- create a `MapDef` `.tres` next to it pointing at the scene.
 
 ## Units of measure
 
 Data is written in **tiles**, never pixels, so art resolution can change without rebalancing.
-Distances (`sight_range`, weapon `range`, `splash_radius`) are in tiles, `move_speed` and
+Distances (`sight_range`, `radius`, weapon `range`, `splash_radius`) are in tiles, `move_speed` and
 `projectile_speed` in tiles per second, times (`build_time`, `cooldown`) in seconds.
 `footprint` is in tiles. Code converts using a single `TILE_SIZE` constant (pixels per tile).
 

@@ -16,4 +16,5 @@ requires = Array[StringName]([&"a_hq"])
 max_health = 60
 sight_range = 7.0
 move_speed = 4.0
+radius = 0.35
 supply = 1

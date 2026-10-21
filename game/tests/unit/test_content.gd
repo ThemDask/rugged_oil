@@ -27,6 +27,12 @@ func test_lookup_by_id() -> void:
 	assert_null(GameData.unit(&"does_not_exist"))
 
 
+func test_test_map_loads() -> void:
+	var map := GameData.map(&"test_map")
+	assert_not_null(map)
+	assert_not_null(map.scene)
+
+
 func test_weapons_load_as_sub_resources() -> void:
 	var infantry := GameData.unit(&"a_infantry")
 	assert_eq(infantry.weapons.size(), 1)

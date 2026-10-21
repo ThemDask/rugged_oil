@@ -74,6 +74,13 @@ func test_bad_weapon() -> void:
 	assert_has_problem(_validate(), "needs range > 0")
 
 
+func test_map_without_scene() -> void:
+	var map := MapDef.new()
+	map.id = &"m"
+	map.display_name = "M"
+	assert_has_problem(ContentValidator.validate(rules, [faction], [worker], [hq], [map]), "has no scene")
+
+
 func test_non_positive_health() -> void:
 	worker.max_health = 0
 	assert_has_problem(_validate(), "max_health")

@@ -27,14 +27,15 @@ tools/                developer scripts (test runner, future data import/export)
 game/                 the Godot project, res:// root
   autoload/           singletons: EventBus (global signals), GameData (content registry)
   core/               engine-light game rules and types; no scene-tree dependencies
-    defs/             Resource classes describing static data (UnitDef, BuildingDef, ...)
+                      (Tiles = world scale, Formation = group spreading, ContentValidator)
+    defs/             Resource classes describing static data (UnitDef, BuildingDef, MapDef, ...)
     setup/            MatchConfig + PlayerSlot: what the skirmish setup screen produces
-    commands/         Command base class: every state change goes through a Command
+    commands/         Command base class and its subclasses (MoveCommand, ...)
   content/            game data as .tres: rules, factions, units, buildings, maps
-  match/              runtime match scene: loads a MatchConfig, spawns, win/lose
+  match/              GameMatch (runs a skirmish, current run scene) and GameMap (map base script)
   entities/           unit / building / projectile scenes and their node scripts
-  systems/            cross-entity gameplay systems: selection, orders, economy, production,
-                      combat, fog of war, pathfinding glue
+  systems/<name>/     one folder per gameplay system: camera, commands (CommandDispatcher),
+                      selection; later economy, production, combat, fog
   ai/                 computer opponents (issue Commands exactly like the player)
   ui/                 menus/, hud/, match setup screen, shared widgets
   assets/             art, audio, fonts, shaders (human-made; don't generate binaries here)
