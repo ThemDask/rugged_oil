@@ -32,6 +32,13 @@ its class, so files can be moved around freely.
 | `BuildingDef` | + `footprint`, `produces`, `provides_supply`, `is_dropoff` |
 | `WeaponDef` | `damage`, `range`, `cooldown`, `splash_radius`, `bonus_vs_tags` |
 
+## Units of measure
+
+Data is written in **tiles**, never pixels, so art resolution can change without rebalancing.
+Distances (`sight_range`, weapon `range`, `splash_radius`) are in tiles, `move_speed` and
+`projectile_speed` in tiles per second, times (`build_time`, `cooldown`) in seconds.
+`footprint` is in tiles. Code converts using a single `TILE_SIZE` constant (pixels per tile).
+
 ## Rules
 
 - `id`s are globally unique, `lower_snake_case`, prefixed per faction: `a_worker`, `b_barracks`.

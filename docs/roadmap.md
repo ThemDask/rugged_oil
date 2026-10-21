@@ -10,11 +10,35 @@ Tick items off as they land.
 - [x] Headless test runner
 
 ## M1: A unit on a map
-- [ ] Decide 2D vs 3D (design.md, open question 1)
-- [ ] RTS camera (pan, zoom, edge scroll)
-- [ ] Test map with navigation
-- [ ] Unit entity scene configured from a UnitDef
-- [ ] Select (click, drag-box) and move via MoveCommand
+**Done when:** pressing F5 opens a test map with a few placeholder units. You can pan and zoom
+the camera, select units by click or drag-box, and right-click to send them moving around
+obstacles without piling on one spot.
+
+- [x] Decide 2D vs 3D: 2D, top-down
+- [ ] **World scale:** `TILE_SIZE` constant (e.g. 32 px) and tile↔pixel helpers in `core/`.
+      Data stays in tiles (see data.md).
+- [ ] **RTS camera** (`systems/camera/rts_camera.gd`, Camera2D): WASD/arrows and edge-scroll
+      pan, mouse-wheel zoom toward the cursor, middle-drag pan, clamped to map bounds.
+      Tunables exported for later settings.
+- [ ] **Test map** (`content/maps/test_map/`): code-drawn placeholder ground and grid, a few
+      rectangular obstacles (StaticBody2D), and a NavigationRegion2D baked from them at load.
+      Can be replaced later by a painted TileMapLayer with no code changes elsewhere.
+- [ ] **Unit entity** (`entities/units/unit.tscn`): CharacterBody2D + NavigationAgent2D
+      (avoidance on). `setup(def, player_id, color)` configures it from a UnitDef. The
+      placeholder look is a team-colored circle with a facing notch and a health bar, and it
+      rotates toward its heading.
+- [ ] **Commands:** `MoveCommand` (unit ids + target), plus a `CommandDispatcher` system that
+      validates ownership and executes, emitting `EventBus.command_issued`.
+- [ ] **Selection system** (`systems/selection/`): click select, shift-add, drag-box, own units
+      only, selection ring. Right-click issues a MoveCommand with spread-out targets so a group
+      doesn't stack on one point.
+- [ ] **Match scene stub** (`match/match.tscn`): builds a dev MatchConfig (human vs AI), loads the
+      test map, and spawns each player's `starting_units` from their FactionDef at spawn points.
+      Set as the run scene for now. The main menu comes in M7.
+- [ ] **Tests:** tile/pixel conversion, camera clamping maths, selection-rectangle maths, group
+      target spreading, MoveCommand validation and serialization.
+
+Out of scope for M1: buildings, combat, AI behaviour, fog, HUD (beyond a debug label).
 
 ## M2: Match bootstrap
 - [ ] Match scene loads a MatchConfig, spawns factions' starting units/buildings
