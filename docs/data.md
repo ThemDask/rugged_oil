@@ -49,7 +49,9 @@ A map is a scene whose root uses `match/game_map.gd` (see `content/maps/test_map
 Data is written in **tiles**, never pixels, so art resolution can change without rebalancing.
 Distances (`sight_range`, `radius`, weapon `range`, `splash_radius`) are in tiles, `move_speed` and
 `projectile_speed` in tiles per second, times (`build_time`, `cooldown`) in seconds.
-`footprint` is in tiles. Code converts using a single `TILE_SIZE` constant (pixels per tile).
+`footprint` is in tiles. The view converts to pixels via `Tiles` (32 px per tile). The
+simulation converts data to integer sim units (1 tile = 1000) when a match starts, so `.tres`
+values can stay human-friendly decimals while simulation maths stays integer.
 
 ## Rules
 

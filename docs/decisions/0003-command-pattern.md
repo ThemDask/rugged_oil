@@ -11,6 +11,6 @@ and AI controllers create Commands; systems execute them.
 
 ## Consequences
 - The AI cannot cheat by accident: it has the same verbs as the player.
-- A command log plus `MatchConfig` and seed is a replay. Multiplayer (lockstep) stays possible,
-  though it would additionally require a deterministic simulation, which is not a goal yet.
+- A command log plus `MatchConfig` and seed is a replay, and Commands are what lockstep
+  multiplayer exchanges (the deterministic simulation it needs is decided in 0005).
 - Slight indirection for simple actions. Accepted.

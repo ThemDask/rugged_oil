@@ -1,7 +1,8 @@
 # Roadmap: Rugged Oil
 
 Ordered by dependency. Each milestone ends playable or testable. **Current scope = M2–M6 for one
-faction:** a full 1v1 match from main menu to destroying the enemy HQ.
+faction:** a full 1v1 match from main menu to destroying the enemy HQ, preceded by M1.5 so
+everything is built on the deterministic simulation.
 
 ## M0: Foundation ✅
 - [x] Repo layout, CLAUDE.md, docs, git, headless test runner
@@ -11,6 +12,16 @@ faction:** a full 1v1 match from main menu to destroying the enemy HQ.
 - [x] World scale (`Tiles`), RTS camera, test map with baked navigation
 - [x] Unit entity, MoveCommand + CommandDispatcher, click/box selection, group spreading
 - [x] GameMatch scene spawning starting units from a dev MatchConfig
+
+## M1.5: Deterministic simulation core
+See `decisions/0005-deterministic-lockstep.md`. Rebuilds M1's movement on the simulation.
+- [ ] `core/sim/`: simulation state, fixed tick loop (20/s), integer sim units, seeded RNG
+- [ ] Commands scheduled per tick and applied in a fixed order. The simulation validates them.
+- [ ] Map as a tile grid: blocked tiles from obstacles, spawn points
+- [ ] Grid A* pathfinding (integer costs) and deterministic unit separation
+- [ ] Units live in the simulation. Unit nodes become views that interpolate between ticks.
+- [ ] Remove Godot navigation from gameplay (NavigationAgent2D, navmesh baking, RVO)
+- [ ] State checksum, plus a determinism test (same seed and commands → same checksums)
 
 ## M2: Game flow and menus
 - [ ] Main menu: Play, Settings, Exit (`ui/menus/main_menu`)
@@ -52,3 +63,8 @@ faction:** a full 1v1 match from main menu to destroying the enemy HQ.
 
 ## M9: Content and polish
 - [ ] More maps, balance pass, audio, effects, real art, export presets
+
+## M10: Multiplayer (much later)
+- [ ] Relay server, turn batching (~150 ms) with a 2-turn input delay
+- [ ] Desync detection via checksums, lobby, reconnect/drop handling
+- [ ] AI in multiplayer: deterministic AI or host-run AI

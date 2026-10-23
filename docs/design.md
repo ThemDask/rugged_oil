@@ -15,7 +15,8 @@ can be heavily modified and upgraded.
 - **Genre:** classic base-building RTS: gather, build, train, fight. Top-down 2D.
 - **Pace:** slower and simpler than the classics. Fewer units, fewer clicks, more decisions.
 - **Setting:** post-apocalyptic Earth, desert wasteland, Mad Max vibes.
-- **Mode:** skirmish only, **always 1v1 vs AI**.
+- **Mode:** skirmish, **1v1 vs AI**. **Multiplayer later** (much later sprint), via
+  deterministic lockstep (see `decisions/0005-deterministic-lockstep.md`).
 - **Factions:** 2, asymmetric. **The current scope builds one faction first.** The AI uses the
   same faction until the second one exists.
 - **Win condition:** each player starts with their own **HQ**. Destroy the enemy HQ to win; lose

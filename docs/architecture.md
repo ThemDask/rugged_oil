@@ -2,65 +2,71 @@
 
 ## Goals
 
+- **Deterministic, lockstep-ready:** the same commands always produce the same game, on every
+  machine. Multiplayer (later) exchanges only Commands. See `decisions/0005-deterministic-lockstep.md`.
 - **Content-driven:** adding or rebalancing a unit means editing data, not code.
 - **Testable:** game rules run headlessly in the test suite.
 - **Fair, replaceable AI:** the AI plays through the same interface as the human.
-- **Doors left open:** replays, save/load and multiplayer shouldn't need a rewrite later.
 
 ## Layers
 
 ```
-            ┌──────────────────────── ui/ ────────────────────────┐
-            │ main menu · match setup · HUD · minimap             │
-            └──────────┬──────────────────────────▲───────────────┘
-        builds         │ MatchConfig              │ EventBus signals / reads state
-                       ▼                          │
-  player input ─► Command ◄─ ai/          ┌───────┴────────┐
-                     │                    │    match/      │  loads config, spawns,
-                     ▼                    │                │  checks win conditions
-            ┌────────────── systems/ ─────┴────────────────┐
-            │ orders · production · economy · combat · fog │
-            └──────────┬────────────────────────▲──────────┘
-                       ▼                        │
-            entities/ (unit, building nodes) ───┘
-                       │ read stats from
-                       ▼
-     autoload/GameData ◄── content/*.tres  (typed by core/defs/*)
+   player input (ui/, systems/selection)        ai/        network relay (later)
+                 │                                │                 │
+                 └──────────────► Command ◄───────┴─────────────────┘
+                                     │  scheduled for tick T
+                                     ▼
+┌──────────────────────────── Simulation (core/sim/) ─────────────────────────────┐
+│ fixed tick · integer maths · seeded RNG · entities processed in id order        │
+│ owns ALL game state: units, buildings, resources, fuel, production, combat      │
+│ tile grid + A* pathfinding · deterministic separation · per-tick checksum       │
+└──────────────────────────────────────┬──────────────────────────────────────────┘
+                                       │ read-only (+ coarse events)
+                                       ▼
+┌────────────────────── View: Godot Nodes ──────────────────────┐
+│ entities/ draw sim entities, interpolating between ticks      │
+│ ui/ HUD and menus · camera · effects · audio                  │
+└────────────────────────────────────────────────────────────────┘
+        stats come from:  autoload/GameData ◄── content/*.tres (typed by core/defs/*)
 ```
 
+### `core/sim/`: the simulation (all game state)
+Plain GDScript classes (`RefCounted`), no Nodes and no engine physics or navigation. It advances
+in fixed ticks (target 20/s), applies the Commands scheduled for each tick, then runs its systems
+in a fixed order. It uses integer sim units (1 tile = 1000) and one seeded RNG. It can produce a
+checksum of its full state. A whole match can run headlessly, and that's how we test determinism.
+
 ### `core/`: types and pure rules
-Resource classes for static data (`core/defs`), match setup types (`core/setup`) and the `Command`
-base class. No dependency on the scene tree or autoloads. Everything here is unit-testable.
+Resource classes for static data (`core/defs`), match setup types (`core/setup`), Commands
+(`core/commands`) and helpers. No dependency on the scene tree.
 
 ### `content/`: data
 `.tres` instances of the `core/defs` classes. `GameData` scans this folder recursively at startup
 and indexes every definition by `id`. See `data.md`.
 
-### `entities/`: things in the world
-One scene per unit or building *archetype* (e.g. `unit.tscn`), configured at spawn time with a
-`UnitDef`. Only distinct visuals and behaviours get their own scene, and a def's `scene` field
-can override the default. Entities own movement, animation and hit detection. They don't decide
-strategy.
+### `entities/`: views of sim entities
+One scene per unit or building archetype. Each view follows one sim entity by id: it reads its
+position, facing and health, interpolates between the last two ticks, and draws a placeholder.
+**Views never change game state.**
 
-### `systems/`: gameplay rules across entities
-One folder per system: `camera`, `commands` (CommandDispatcher), `selection`, and later
-`economy` (oil, workforce and metal per player, gathering, fuel), `production` (build and train
-queues) and `combat` (targeting, damage). Each system is a node under the match scene, or a plain class it owns. Where possible, the
-logic lives in plain classes so tests can drive it.
+### `systems/`: Node-side systems
+Things that need the engine: `camera`, `selection` (turns mouse input into Commands) and the
+bridge that feeds Commands into the simulation (`commands`). Gameplay rules such as economy,
+production and combat live inside `core/sim/` as simulation systems, not here.
 
 ### `ai/`: computer players
-One AI controller per AI `PlayerSlot`. It reads the visible game state and **emits `Command`s**.
-It has no special access, so difficulty comes from decision quality (plus optional,
-explicit resource bonuses).
+One AI controller per AI `PlayerSlot`. It reads simulation state and **emits Commands**. For
+lockstep, the AI must itself be deterministic (sim RNG only, decisions on tick boundaries) or run
+on one machine only and send its Commands like a player. To be decided before multiplayer.
 
 ### `match/`: orchestration
-Takes a `MatchConfig`, loads the map, spawns each player's starting units and buildings from
-their `FactionDef`, starts the AI controllers and checks win conditions.
+Takes a `MatchConfig`, creates the simulation (map grid, players, starting HQ and units), drives
+its tick loop from `_physics_process`, spawns and removes views, and reports win or loss.
 
 ### `ui/`
 `menus/` (full screens: main menu, match setup), `dialogs/` (modals: settings, pause),
-`hud/` (in-match overlay), `widgets/` (shared pieces). The setup screen produces a `MatchConfig`.
-The HUD reads state and listens to `EventBus`. UI never mutates game state directly: it issues Commands.
+`hud/` (in-match overlay), `widgets/` (shared pieces). UI never changes game state directly:
+it issues Commands.
 
 ## Scene flow
 
@@ -73,18 +79,29 @@ ui/menus/main_menu.tscn ──► ui/menus/match_setup.tscn ──► match/game
 
 Screens are switched with `get_tree().change_scene_to_file()`. The match scene is self-contained,
 so leaving it frees all match state. Modals (settings, pause) are scenes under `ui/dialogs/` and
-are instanced on top of the current screen, not separate scenes in the flow.
+are instanced on top of the current screen.
 
-## Commands
+## Commands and ticks
 
-Every state-changing action is a `Command` subclass (`MoveCommand`, `AttackCommand`,
-`BuildCommand`, `TrainCommand`, ...) carrying `player_id`, target data, and the `tick` it's
-applied on. This gives us:
+Every state-changing action is a `Command` (`MoveCommand`, `AttackCommand`, `BuildCommand`,
+`TrainCommand`, ...) carrying `player_id`, its data, and the `tick` it executes on.
 
-- one code path for human and AI;
-- an action log, which together with the `MatchConfig` and random seed makes a **replay**;
-- a natural unit to send over the network if multiplayer ever happens (lockstep needs
-  determinism, which we aren't promising yet, but this keeps it reachable).
+- Commands are **orders** (one per player decision), not per-frame state changes.
+- **Single-player:** local Commands are scheduled for the next tick.
+- **Multiplayer (later):** Commands are batched per **turn** (e.g. 150 ms, several ticks),
+  exchanged through a relay server with a 2-turn input delay, and applied by every client in
+  the same order (tick, player id, sequence). State checksums detect desyncs.
+- The simulation **validates every Command** (ownership, costs, requirements). Invalid Commands
+  are dropped identically on every machine.
+- A command log plus `MatchConfig` (with seed) is a **replay**.
+
+## Determinism rules (simulation code)
+
+1. No floats in simulation state or rule maths. Integers only, sim units of 1/1000 tile.
+2. No engine physics, navigation, timers or `randf()` in the simulation. Use the sim RNG.
+3. Iterate entities in ascending id. Never depend on Node order or frame timing.
+4. Everything the simulation needs comes from Commands, `MatchConfig` and content data.
+5. Every change to simulation rules keeps the determinism test passing.
 
 ## Autoloads
 
@@ -94,8 +111,7 @@ applied on. This gives us:
 | `GameData` | Read-only registry of all content definitions, plus `validate()`. |
 | `Settings` *(M2)* | Player settings (audio, video, input). Loads and saves `user://settings.cfg` and applies them. |
 
-Keep the autoload list short. Match-specific state belongs to the match scene, not a singleton,
-so it's discarded cleanly between matches.
+Keep the autoload list short. Match-specific state belongs to the simulation and the match scene.
 
 ## Persistence
 
@@ -109,6 +125,6 @@ so it's discarded cleanly between matches.
 ## Testing
 
 `game/tests/run_tests.gd` is a small built-in runner (no plugins), run headlessly by
-`tools/run_tests.ps1`. It discovers `test_*.gd` files and treats script errors raised during a test
-as failures. If testing needs grow (mocking, scene runners), GUT or gdUnit4 can replace it without
-changing the folder structure.
+`tools/run_tests.ps1`. It discovers `test_*.gd` files and treats script errors during a test as
+failures. Beyond unit tests, the key test is the **determinism test**: run a match twice from
+the same seed and commands, and assert identical checksums at every tick.

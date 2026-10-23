@@ -2,8 +2,8 @@
 
 A **top-down 2D RTS** on a post-apocalyptic desert Earth (Mad Max vibes), built in **Godot 4.6 with
 GDScript**. Golden-era RTS mechanics (StarCraft, Red Alert 2) at a **slower, simpler pace**.
-Skirmish only, **always 1v1 vs AI**. No multiplayer or campaign, though the architecture keeps
-them possible (see `docs/architecture.md`).
+Skirmish, **1v1 vs AI** for now. **Multiplayer comes in a much later sprint via deterministic
+lockstep**, so the simulation is deterministic from day one (`docs/decisions/0005-deterministic-lockstep.md`).
 
 Design pillars (details, game flow and open questions in `docs/design.md`):
 - **Three resources:** workforce (used by everything), oil (vehicles and their fuel), metal
@@ -14,7 +14,7 @@ Design pillars (details, game flow and open questions in `docs/design.md`):
 - **Small desert maps** with sparse resources and a few obstacles.
 - Art is code-drawn placeholders for now.
 
-Current scope: roadmap M2–M6 (menus, buildings, economy, production, combat) for one faction.
+Current scope: roadmap M1.5 (deterministic simulation core), then M2–M6 (menus, buildings, economy, production, combat) for one faction.
 Content in `game/content/` is a **placeholder** (`faction_a`, worker, HQ) until the user defines
 the faction. Don't invent design specifics; add open questions to `docs/design.md` instead.
 The earlier space RTS concept is archived in `docs/archive/` and isn't current.
@@ -43,6 +43,7 @@ tools/                developer scripts (test runner, future data import/export)
 game/                 the Godot project, res:// root
   autoload/           singletons: EventBus (global signals), GameData (content registry)
   core/               engine-light game rules and types; no scene-tree dependencies
+    sim/              THE simulation: all game state, fixed tick, integer maths (M1.5)
                       (Tiles = world scale, Formation = group spreading, ContentValidator)
     defs/             Resource classes describing static data (UnitDef, BuildingDef, MapDef, ...)
     setup/            MatchConfig + PlayerSlot: what the skirmish setup screen produces
@@ -75,7 +76,11 @@ game/                 the Godot project, res:// root
    be tested without spawning scenes, think about extracting it.
 5. **EventBus is for coarse, game-level events** (match started, entity destroyed). Use direct
    signals between nearby nodes.
-6. **The game is two factions, but nothing should assume exactly two.** Iterate over
+6. **The simulation is deterministic.** All game state lives in `core/sim/`. Inside it: integers
+   only (1 tile = 1000 sim units, no float state or float trig), no Nodes, physics, navigation or
+   `randf()` (use the sim RNG), entities iterated in id order. Nodes are views that read sim state
+   and never change it. Full rules: "Determinism rules" in `docs/architecture.md`.
+7. **The game is two factions, but nothing should assume exactly two.** Iterate over
    `GameData.factions()`, don't branch on faction ids.
 
 ## GDScript conventions
@@ -101,9 +106,9 @@ game/                 the Godot project, res:// root
   move or rename a script or asset, move its sidecar with it (or do the move in the Godot editor).
 - `.tscn`/`.tres` are editable text. Keep `ext_resource` ids consistent. Godot adds `uid=` attributes
   when the file is next saved in the editor, which is fine.
-- Pathfinding is Godot's built-in navigation (NavigationServer2D, NavigationAgent2D with
-  avoidance). Maps bake their navmesh from StaticBody2D obstacles on load (`match/game_map.gd`).
-  Keep all movement going through `Unit.move_to()` so the navigation backend can change later.
+- **Transitional:** M1 movement still uses Godot navigation (NavigationAgent2D, baked navmesh,
+  RVO avoidance). It is **not deterministic** and gets replaced in M1.5 by sim-side grid A* and
+  separation. Don't build new gameplay on it.
 - Design questions (unit roles, faction identity, numbers) belong to the user: write them as
   open questions in `docs/design.md` instead of inventing answers.
 - Update `docs/` when a change alters architecture or data formats. Record significant decisions as
