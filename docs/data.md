@@ -8,13 +8,14 @@ classes that define their shape are in `game/core/defs/`. See
 
 ```
 content/
-  rules.tres                    GameRules: resource types, starting resources, supply cap
+  rules.tres                    GameRules: resource types (oil, workforce, metal), starting
+                                resources, supply cap
   factions/
     faction_a/
       faction.tres              FactionDef
       units/*.tres              UnitDef (weapons embedded as WeaponDef sub-resources)
       buildings/*.tres          BuildingDef
-    faction_b/ ...
+    (second faction later, same structure)
   maps/<map>/map.tres           MapDef, pointing at the map scene next to it
 ```
 

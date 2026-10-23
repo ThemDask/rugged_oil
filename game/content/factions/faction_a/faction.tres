@@ -6,7 +6,7 @@
 script = ExtResource("1_faction")
 id = &"faction_a"
 display_name = "Faction A"
-description = "Placeholder faction. Identity TBD (see docs/design.md)."
+description = "Placeholder faction. Identity TBD (see docs/design.md, question 1)."
 color = Color(0.25, 0.5, 1, 1)
 starting_units = Array[StringName]([&"a_worker", &"a_worker", &"a_worker"])
 starting_buildings = Array[StringName]([&"a_hq"])

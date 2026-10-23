@@ -43,8 +43,9 @@ can override the default. Entities own movement, animation and hit detection. Th
 strategy.
 
 ### `systems/`: gameplay rules across entities
-Selection, order execution, production queues, resource bookkeeping, damage resolution, fog of
-war. Each system is a node under the match scene, or a plain class it owns. Where possible, the
+One folder per system: `camera`, `commands` (CommandDispatcher), `selection`, and later
+`economy` (oil, workforce and metal per player, gathering, fuel), `production` (build and train
+queues) and `combat` (targeting, damage). Each system is a node under the match scene, or a plain class it owns. Where possible, the
 logic lives in plain classes so tests can drive it.
 
 ### `ai/`: computer players
@@ -57,8 +58,22 @@ Takes a `MatchConfig`, loads the map, spawns each player's starting units and bu
 their `FactionDef`, starts the AI controllers and checks win conditions.
 
 ### `ui/`
-Menus and HUD. The setup screen produces a `MatchConfig`. The HUD reads state and listens to
-`EventBus`. UI never mutates game state directly: it issues Commands.
+`menus/` (full screens: main menu, match setup), `dialogs/` (modals: settings, pause),
+`hud/` (in-match overlay), `widgets/` (shared pieces). The setup screen produces a `MatchConfig`.
+The HUD reads state and listens to `EventBus`. UI never mutates game state directly: it issues Commands.
+
+## Scene flow
+
+```
+ui/menus/main_menu.tscn ──► ui/menus/match_setup.tscn ──► match/game_match.tscn
+        ▲                     (builds a MatchConfig,          │
+        │                      sets GameMatch.pending_config) │ Esc: ui/dialogs/pause_menu
+        └────────────────── Exit (change_scene) ◄─────────────┘
+```
+
+Screens are switched with `get_tree().change_scene_to_file()`. The match scene is self-contained,
+so leaving it frees all match state. Modals (settings, pause) are scenes under `ui/dialogs/` and
+are instanced on top of the current screen, not separate scenes in the flow.
 
 ## Commands
 
@@ -77,6 +92,7 @@ applied on. This gives us:
 |---|---|
 | `EventBus` | Coarse global signals (match started/ended, entity spawned/destroyed, command issued). |
 | `GameData` | Read-only registry of all content definitions, plus `validate()`. |
+| `Settings` *(M2)* | Player settings (audio, video, input). Loads and saves `user://settings.cfg` and applies them. |
 
 Keep the autoload list short. Match-specific state belongs to the match scene, not a singleton,
 so it's discarded cleanly between matches.

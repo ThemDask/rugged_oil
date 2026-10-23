@@ -4,8 +4,10 @@
 
 [resource]
 script = ExtResource("1_rules")
-resource_types = Array[StringName]([&"gold"])
+resource_types = Array[StringName]([&"workforce", &"oil", &"metal"])
 starting_resources = Dictionary[StringName, int]({
-&"gold": 500
+&"metal": 0,
+&"oil": 300,
+&"workforce": 20
 })
 supply_cap = 200

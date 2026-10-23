@@ -9,13 +9,13 @@ faction = &"faction_a"
 display_name = "Headquarters"
 tags = Array[StringName]([&"structure", &"armored"])
 cost = Dictionary[StringName, int]({
-&"gold": 400
+&"workforce": 10
 })
 build_time = 60.0
 max_health = 1500
 armor = 2
 sight_range = 10.0
 footprint = Vector2i(4, 4)
-produces = Array[StringName]([&"a_worker", &"a_infantry"])
+produces = Array[StringName]([&"a_worker", &"a_buggy"])
 provides_supply = 10
 is_dropoff = true

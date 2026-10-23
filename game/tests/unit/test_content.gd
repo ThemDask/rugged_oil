@@ -11,8 +11,13 @@ func test_rules_are_loaded() -> void:
 	assert_false(GameData.rules.resource_types.is_empty(), "resource_types")
 
 
-func test_there_are_two_factions() -> void:
-	assert_eq(GameData.factions().size(), 2)
+func test_there_is_a_faction() -> void:
+	assert_false(GameData.factions().is_empty())
+
+
+func test_rules_have_the_three_resources() -> void:
+	for res_type: StringName in [&"workforce", &"oil", &"metal"]:
+		assert_true(res_type in GameData.rules.resource_types, String(res_type))
 
 
 func test_every_faction_can_start_a_match() -> void:
@@ -23,7 +28,7 @@ func test_every_faction_can_start_a_match() -> void:
 
 func test_lookup_by_id() -> void:
 	assert_eq(GameData.unit(&"a_worker").display_name, "Worker")
-	assert_eq(GameData.entity(&"b_hq").display_name, "Stronghold")
+	assert_eq(GameData.entity(&"a_hq").display_name, "Headquarters")
 	assert_null(GameData.unit(&"does_not_exist"))
 
 
@@ -34,6 +39,6 @@ func test_test_map_loads() -> void:
 
 
 func test_weapons_load_as_sub_resources() -> void:
-	var infantry := GameData.unit(&"a_infantry")
-	assert_eq(infantry.weapons.size(), 1)
-	assert_true(infantry.weapons[0].damage > 0)
+	var buggy := GameData.unit(&"a_buggy")
+	assert_eq(buggy.weapons.size(), 1)
+	assert_true(buggy.weapons[0].damage > 0)

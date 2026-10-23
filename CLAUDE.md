@@ -1,22 +1,23 @@
-# newRTS: asymmetric 2D space RTS (shelved)
+# Rugged Oil
 
-> **Status: shelved (2026-10-23).** Development paused in favour of a simpler, classic top-down
-> RTS developed in a separate project. Keep this repo as-is; only change it if the user explicitly
-> resumes it. M0 and M1 are complete (see `docs/roadmap.md`).
+A **top-down 2D RTS** on a post-apocalyptic desert Earth (Mad Max vibes), built in **Godot 4.6 with
+GDScript**. Golden-era RTS mechanics (StarCraft, Red Alert 2) at a **slower, simpler pace**.
+Skirmish only, **always 1v1 vs AI**. No multiplayer or campaign, though the architecture keeps
+them possible (see `docs/architecture.md`).
 
-A 2-faction **space RTS**, **top-down 2D**, built in **Godot 4.6 with GDScript**. Scope: skirmish
-matches the player configures (map, opponents, factions, teams, pre-game customisation) against AI.
-No multiplayer, and a campaign is only a "maybe, later", but the architecture keeps both possible
-(see `docs/architecture.md`).
+Design pillars (details, game flow and open questions in `docs/design.md`):
+- **Three resources:** workforce (used by everything), oil (vehicles and their fuel), metal
+  (advanced units and buildings, mid to late game).
+- **The hook:** vehicles are expensive, burn oil to move, and can be heavily modified.
+- **Two asymmetric factions**, but **one faction is built first**. Each starts with an HQ, and
+  destroying the enemy HQ wins.
+- **Small desert maps** with sparse resources and a few obstacles.
+- Art is code-drawn placeholders for now.
 
-Design pillars (details and open questions in `docs/design.md`):
-- **Slow, tactical, no APM race:** positioning, composition and choosing fights beat click speed.
-- **Strong asymmetry:** a fleet built around a huge mothership vs. slowly expanding aliens.
-- **Big size range:** the mothership is ~10× a corvette, and big ships turn slowly.
-- **Minimal visuals:** sharp-edged shapes, thin grey outlines. Art is code-drawn placeholders for now.
-
-The current faction content (`faction_a`/`faction_b`, workers, infantry, gold) is a **placeholder**
-from before the setting was chosen. Don't build on its specifics.
+Current scope: roadmap M2–M6 (menus, buildings, economy, production, combat) for one faction.
+Content in `game/content/` is a **placeholder** (`faction_a`, worker, HQ) until the user defines
+the faction. Don't invent design specifics; add open questions to `docs/design.md` instead.
+The earlier space RTS concept is archived in `docs/archive/` and isn't current.
 
 ## Commands
 
@@ -36,7 +37,8 @@ Machine-specific paths live in `CLAUDE.local.md` (gitignored).
 
 ```
 docs/                 design.md (what the game is), architecture.md (how it is built),
-                      data.md (how game data works), roadmap.md, decisions/ (ADRs)
+                      data.md (how game data works), roadmap.md, decisions/ (ADRs),
+                      archive/ (old concepts, not current)
 tools/                developer scripts (test runner, future data import/export)
 game/                 the Godot project, res:// root
   autoload/           singletons: EventBus (global signals), GameData (content registry)
@@ -49,9 +51,10 @@ game/                 the Godot project, res:// root
   match/              GameMatch (runs a skirmish, current run scene) and GameMap (map base script)
   entities/           unit / building / projectile scenes and their node scripts
   systems/<name>/     one folder per gameplay system: camera, commands (CommandDispatcher),
-                      selection; later economy, production, combat, fog
+                      selection; later economy, production, combat
   ai/                 computer opponents (issue Commands exactly like the player)
-  ui/                 menus/, hud/, match setup screen, shared widgets
+  ui/                 menus/ (main menu, match setup), dialogs/ (settings, pause modals),
+                      hud/, widgets/
   assets/             art, audio, fonts, shaders (human-made; don't generate binaries here)
   tests/              run_tests.gd runner, test_case.gd base, unit/ tests
 ```

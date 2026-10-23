@@ -10,8 +10,8 @@ config_version=5
 
 [application]
 
-config/name="newRTS (asymmetric 2D space RTS, shelved)"
-config/description="Asymmetric 2D space RTS. Shelved after milestone 1."
+config/name="Rugged Oil"
+config/description="Post-apocalyptic top-down 2D RTS."
 run/main_scene="res://match/game_match.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 

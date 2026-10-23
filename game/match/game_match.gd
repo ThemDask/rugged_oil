@@ -5,6 +5,7 @@ extends Node2D
 
 const UNIT_SCENE := preload("res://entities/units/unit.tscn")
 const DEV_MAP := &"test_map"
+const PLAYER_COLORS: Array[Color] = [Color(0.25, 0.5, 1.0), Color(0.9, 0.25, 0.2)]
 
 ## Set this before switching to the match scene. It is consumed in _ready.
 static var pending_config: MatchConfig
@@ -89,7 +90,7 @@ func _spawn_starting_units(player_id: int, spawn: Vector2) -> void:
 		spawn_unit(defs[i], player_id, points[i])
 
 
-## Human with the first faction vs one AI with the next.
+## Human with the first faction vs one AI with the next (the same one while only one exists).
 static func _dev_config() -> MatchConfig:
 	var factions := GameData.factions()
 	var dev := MatchConfig.new()
@@ -98,6 +99,6 @@ static func _dev_config() -> MatchConfig:
 		var faction := factions[i % factions.size()]
 		var controller := PlayerSlot.Controller.HUMAN if i == 0 else PlayerSlot.Controller.AI
 		var slot := PlayerSlot.create(controller, faction.id, i)
-		slot.color = faction.color
+		slot.color = PLAYER_COLORS[i]
 		dev.players.append(slot)
 	return dev

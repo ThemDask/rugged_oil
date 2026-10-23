@@ -52,4 +52,7 @@ func test_real_factions_are_accepted() -> void:
 	var ids: Array[StringName] = []
 	for f in GameData.factions():
 		ids.append(f.id)
-	assert_no_problems(_one_vs_one().validate(ids))
+	var config := _one_vs_one()
+	for i in config.players.size():
+		config.players[i].faction = ids[i % ids.size()]
+	assert_no_problems(config.validate(ids))

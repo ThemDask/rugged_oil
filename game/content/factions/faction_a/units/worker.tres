@@ -9,7 +9,7 @@ faction = &"faction_a"
 display_name = "Worker"
 tags = Array[StringName]([&"worker", &"light"])
 cost = Dictionary[StringName, int]({
-&"gold": 50
+&"workforce": 1
 })
 build_time = 12.0
 requires = Array[StringName]([&"a_hq"])

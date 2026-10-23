@@ -1,77 +1,54 @@
-# Roadmap
+# Roadmap: Rugged Oil
 
-> **Status: shelved after M1 (2026-10-23).** M0–M1 are done. M2 onwards is on hold. Note that
-> M2–M9 were written before the space setting was chosen. Revisit them against `design.md`
-> when resuming.
+Ordered by dependency. Each milestone ends playable or testable. **Current scope = M2–M6 for one
+faction:** a full 1v1 match from main menu to destroying the enemy HQ.
 
-Milestones are ordered by dependency. Each should end with something playable or testable.
-Tick items off as they land.
+## M0: Foundation ✅
+- [x] Repo layout, CLAUDE.md, docs, git, headless test runner
+- [x] Data definitions, GameData registry, content validator, MatchConfig/PlayerSlot
 
-## M0: Foundation ✅ (scaffold)
-- [x] Repo layout, CLAUDE.md, docs, git
-- [x] Data definition classes, GameData registry, content validator
-- [x] Match setup types (MatchConfig, PlayerSlot)
-- [x] Headless test runner
+## M1: Units on a map ✅
+- [x] World scale (`Tiles`), RTS camera, test map with baked navigation
+- [x] Unit entity, MoveCommand + CommandDispatcher, click/box selection, group spreading
+- [x] GameMatch scene spawning starting units from a dev MatchConfig
 
-## M1: A unit on a map ✅
-**Done when:** pressing F5 opens a test map with a few placeholder units. You can pan and zoom
-the camera, select units by click or drag-box, and right-click to send them moving around
-obstacles without piling on one spot.
+## M2: Game flow and menus
+- [ ] Main menu: Play, Settings, Exit (`ui/menus/main_menu`)
+- [ ] Create-match screen: map + faction choice, opponent always AI; builds a MatchConfig and
+      starts the match (`ui/menus/match_setup`)
+- [ ] Settings modal: Audio, Video, Input sections (`ui/dialogs/settings_dialog`), stored by a
+      `Settings` autoload in `user://settings.cfg`, applied on startup
+- [ ] Escape modal in matches with Exit, back to main menu (`ui/dialogs/pause_menu`)
+- [ ] Main menu becomes the run scene again
+- [ ] Desert look for the test map
 
-- [x] Decide 2D vs 3D: 2D, top-down
-- [x] **World scale:** `TILE_SIZE` constant (e.g. 32 px) and tile↔pixel helpers in `core/`.
-      Data stays in tiles (see data.md).
-- [x] **RTS camera** (`systems/camera/rts_camera.gd`, Camera2D): WASD/arrows and edge-scroll
-      pan, mouse-wheel zoom toward the cursor, middle-drag pan, clamped to map bounds.
-      Tunables exported for later settings.
-- [x] **Test map** (`content/maps/test_map/`): code-drawn placeholder ground and grid, a few
-      rectangular obstacles (StaticBody2D), and a NavigationRegion2D baked from them at load.
-      Can be replaced later by a painted TileMapLayer with no code changes elsewhere.
-- [x] **Unit entity** (`entities/units/unit.tscn`): CharacterBody2D + NavigationAgent2D
-      (avoidance on). `setup(def, player_id, color)` configures it from a UnitDef. The
-      placeholder look is a team-colored circle with a facing notch and a health bar, and it
-      rotates toward its heading.
-- [x] **Commands:** `MoveCommand` (unit ids + target), plus a `CommandDispatcher` system that
-      validates ownership and executes, emitting `EventBus.command_issued`.
-- [x] **Selection system** (`systems/selection/`): click select, shift-add, drag-box, own units
-      only, selection ring. Right-click issues a MoveCommand with spread-out targets so a group
-      doesn't stack on one point.
-- [x] **Match scene stub** (`match/game_match.tscn`): builds a dev MatchConfig (human vs AI), loads the
-      test map, and spawns each player's `starting_units` from their FactionDef at spawn points.
-      Set as the run scene for now. The main menu comes in M7.
-- [x] **Tests:** tile/pixel conversion, camera clamping maths, selection-rectangle maths, group
-      target spreading, MoveCommand validation and serialization.
+## M3: Buildings and HQ
+- [ ] Building entity configured from a BuildingDef (footprint, health, placeholder look)
+- [ ] Each player starts with their faction's HQ at their spawn
+- [ ] Buildings block navigation (navmesh rebake or obstacles)
+- [ ] Select buildings
 
-Out of scope for M1: buildings, combat, AI behaviour, fog, HUD (beyond a debug label).
+## M4: Economy (oil, workforce, metal)
+- [ ] Per-player resource stock (`systems/economy`), starting resources from GameRules
+- [ ] Resource nodes on maps (oil, metal) and gathering (rules TBD, design.md questions 3–4)
+- [ ] HUD resource bar
 
-## M2: Match bootstrap
-- [ ] Match scene loads a MatchConfig, spawns factions' starting units/buildings
-- [ ] Player ownership, team colors
-- [ ] Win/lose detection, end screen
+## M5: Construction and production
+- [ ] Build buildings (placement preview, validity, cost) via BuildCommand
+- [ ] Train units at buildings via TrainCommand, production queue (`systems/production`)
+- [ ] HUD: selection panel and command buttons
 
-## M3: Economy and production
-- [ ] Resource nodes, workers gather/return
-- [ ] Building placement (footprint, validity)
-- [ ] Production queues (TrainCommand), supply
+## M6: Combat and victory
+- [ ] AttackCommand, auto-targeting, weapons from WeaponDef, damage and armor, death
+- [ ] HQ destroyed means defeat. Win/lose screen, back to menu.
+- [ ] AI v1: builds, trains and attacks with the same Commands as the player (`ai/`)
 
-## M4: Combat
-- [ ] Attack, attack-move, auto-acquire targets
-- [ ] Weapons from WeaponDef, damage/armor/bonuses, death
-- [ ] Projectiles, basic effects
+## M7: The hook: vehicles
+- [ ] Fuel: vehicles consume oil while moving, refuelling (rules TBD, question 5)
+- [ ] Vehicle modification and upgrades (question 6)
 
-## M5: Fog of war and minimap
+## M8: Second faction
+- [ ] Asymmetric mechanics, roster, AI support
 
-## M6: AI v1
-- [ ] Build order, economy management, attack waves
-- [ ] Difficulty levels
-
-## M7: Skirmish UI
-- [ ] Main menu, match setup screen, settings (ConfigFile)
-- [ ] HUD: resources, selection panel, command card
-
-## M8: Content and second faction identity
-- [ ] Full rosters for both factions, tech progression
-- [ ] 2–4 maps
-
-## M9: Polish and ship
-- [ ] Audio, VFX, balance pass, export presets
+## M9: Content and polish
+- [ ] More maps, balance pass, audio, effects, real art, export presets

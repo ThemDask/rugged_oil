@@ -1,120 +1,86 @@
-# Game design: asymmetric 2D space RTS
+# Game design: Rugged Oil
 
-> **Status: shelved (2026-10-23).** Paused to build a simpler classic RTS first. Everything
-> below is kept as the reference vision for when this project resumes.
-
-Living design document. **Decided** sections are binding. **Direction** is the intended vision,
-which can still change. **Open questions** are waiting on a decision and shouldn't be guessed at
-in code.
+Living design document. **Decided** is binding. **Direction** is the intended vision, which can
+still change. **Open questions** wait on a decision and shouldn't be guessed at in code.
 
 ## Pitch
 
-A slow-paced, tactical **space RTS**. Two very different factions: a fleet built around a huge
-mothership, and an alien swarm that slowly spreads across the map. You play skirmish matches
-against computer opponents, with pre-game customisation for replayability.
+A top-down 2D RTS on a ruined, post-apocalyptic Earth, Mad Max style. Two asymmetric factions
+fight over oil, metal and people in small desert maps. Golden-era RTS mechanics (StarCraft,
+Red Alert 2), at a **slower, simpler pace**. The hook: **vehicles** are expensive, run on oil, and
+can be heavily modified and upgraded.
 
 ## Decided
 
-- **Mode:** skirmish vs AI, in matches the player sets up. (A campaign is a *maybe*, see below.)
-- **Factions:** 2, strongly asymmetric.
-- **Match setup:** the player chooses map, number of opponents, each slot's faction, team, color
-  and AI difficulty, plus match options (starting resources, fog of war, game speed).
-- **Engine:** Godot 4.6, GDScript (see `decisions/0001-godot-gdscript.md`).
-- **Presentation:** top-down 2D on a square grid (Node2D, TileMapLayer, Camera2D,
-  NavigationServer2D). Units are single sprites rotated to face their heading (no per-direction
-  art). Isometric was rejected because it needs multi-direction sprite sets.
-- **Art:** placeholder shapes drawn in code until real art exists. Logic must never depend on
-  specific art.
+- **Genre:** classic base-building RTS: gather, build, train, fight. Top-down 2D.
+- **Pace:** slower and simpler than the classics. Fewer units, fewer clicks, more decisions.
+- **Setting:** post-apocalyptic Earth, desert wasteland, Mad Max vibes.
+- **Mode:** skirmish only, **always 1v1 vs AI**.
+- **Factions:** 2, asymmetric. **The current scope builds one faction first.** The AI uses the
+  same faction until the second one exists.
+- **Win condition:** each player starts with their own **HQ**. Destroy the enemy HQ to win; lose
+  yours and you lose.
+- **Buildings:** each faction has buildable buildings, and buildings produce units.
+- **Resources (3):**
+  - **Workforce:** used for everything.
+  - **Oil:** used for vehicles, and as their **fuel** (vehicles burn oil to move).
+  - **Metal:** for advanced units and buildings, mid to late game.
+- **Maps:** small, simple desert maps with sparse resources and a few obstacles.
+- **Engine:** Godot 4.6, GDScript, top-down 2D (see `decisions/0001-godot-gdscript.md`).
+- **Art:** placeholder shapes drawn in code until real art exists. Logic never depends on art.
 
-## Direction (vision notes, 2026-10-21)
+## Game flow (current scope)
 
-### Setting
-Space. Maps are regions of space (asteroids, nebulae and similar as terrain/obstacles: TBD).
+```
+Main menu ── Play ──► Create match (choose map + faction) ── Start ──► Match
+   │                         │ Back                                     │ Esc
+   ├─ Settings ─► modal: Audio · Video · Input                          ▼
+   └─ Exit ─► quit game                                     Escape modal: Exit
+                                                            (ends match, back to main menu)
+```
 
-### Pace and feel
-- **Slow, laid-back but tactical.** No rush strategies and no APM race. Decisions matter more
-  than click speed.
-- Positioning, fleet composition and engagement choice should win games, not micro-spam.
+- **Main menu:** Play, Settings, Exit.
+- **Create match:** pick map and faction (opponent is always one AI). Start / Back.
+- **Settings:** a modal window with Audio, Video and Input sections, saved between sessions.
+- **Escape menu:** Esc in a match opens a modal with Exit, which ends the match and returns to
+  the main menu.
 
-### Factions
+## Direction
 
-**Fleet faction (mothership)**
-- Built around one **huge mothership**, about **10× the size** of the basic unit.
-- Basic unit: the **corvette** (fills the "basic infantry" role).
-- Feels like a mobile, centralised force: protect and position the mothership.
+### The hook: vehicles
+- Vehicles are **expensive** and **consume oil while moving**, so logistics matter: where's
+  your oil, and how far can your convoy go?
+- Vehicles can be **heavily modified and upgraded** (armor plating, weapons, engines,
+  fuel tanks...): the main source of depth and variety.
 
-**Alien faction (swarm)**
-- **Slowly expands** across the map, Zerg-like: territory and spread are part of its economy
-  and strength.
-- Feels organic and creeping versus the fleet's centralised power.
+### Factions (asymmetric, identities TBD)
+Two factions that play differently in the same economy. See open question 1.
 
-### Units and movement
-- **Big size differences** between units (corvette → mothership is ~10×).
-- **Turn rate scales with size:** big ships turn slowly and commit to a heading, small ships are
-  nimble.
-
-### Visual style
-- **Minimal, sharp-edged** shapes with **thin grey outlines**: clean, geometric, readable.
-- This fits code-drawn or simple vector art well, and the current placeholder approach can grow
-  into the final look.
-
-### Replayability: pre-game customisation
-- Some player customisation before a match (e.g. choose loadouts, starting fleet variants,
-  faction perks/doctrines: TBD) so matches play differently.
-
-### Campaign (maybe, later)
-- Possible campaign with **progression points** (persistent unlocks/upgrades between missions).
-- Not in scope now. Keep the customisation system general enough that a campaign could feed
-  it later.
-
-## Implications to keep in mind (no implementation yet)
-
-These are notes on how the vision touches the existing code. They become tasks when we get there.
-
-- **Turn rate** needs a new unit stat (e.g. `turn_rate` in degrees per second) and movement that
-  turns before or while accelerating, instead of the current instant facing.
-- **10× size range** affects navigation: one navmesh clearance doesn't fit both a corvette and a
-  mothership. Options: navigation layers per size class, or large ships using simpler steering.
-  Avoidance and formation spacing already scale with radius.
-- **Mothership** is probably a unit that also acts as a production building (it fits
-  `UnitDef` + production fields, or a shared "producer" capability).
-- **Alien spread** suggests a territory/creep grid system (`systems/territory/`) that the
-  economy, building placement and maybe vision depend on.
-- **Pre-game customisation** extends `MatchConfig`/`PlayerSlot` (e.g. a chosen doctrine or loadout
-  id), with the options themselves stored as data in `content/`.
-- **Campaign progression** would be player save data in `user://`, not `content/`.
-- **Slow pace** is mostly tuning (build times, speeds, economy rate) and lives in data. Good
-  news for balancing.
-
-## Core loop
-
-Gather resources → build up (fleet/swarm) → scout and position → fight decisive engagements →
-destroy the enemy.
-
-## Win / lose conditions
-
-Default: a player is defeated when they lose all buildings (TBD: or all units *and* buildings).
-For the fleet faction, is losing the mothership an instant loss? (Open question 7.)
-A team wins when every opposing team is defeated.
+### Economy
+Sparse resources mean expansion and map control matter. Losing oil supply should hurt
+vehicles directly (fuel).
 
 ## Open questions
 
-1. Faction names and lore.
-2. Resources: what are they in space (asteroid ore, gas, energy)? One or several? How does each
-   faction gather them? Does alien creep itself generate income?
-3. Mothership role: is it the fleet's only production source? Can it move freely, or only slowly
-   or with restrictions? Can there be more than one?
-4. Alien expansion: how does spreading work (creep tiles, spawning nodes, infesting asteroids)?
-   Can the fleet clear it?
-5. Supply/population system: is there a cap, and what raises it?
-6. Unit rosters: roughly how many types per faction, and their roles beyond the corvette?
-7. Is losing the mothership an instant defeat, or a severe setback?
-8. Pre-game customisation: what exactly can players pick (doctrines, starting fleets, perks,
-   cosmetics)? Is it balanced against each other?
-9. Combat feel: weapon types (projectiles, beams, missiles), shields vs hull, ship facing
-   mattering (e.g. broadside weapons on big ships)?
-10. Maps: hand-made only, or procedural too? Player count per map (2, 4)? What terrain exists
-    in space?
-11. AI difficulty levels: how many, and do they differ by skill only or also by resource bonuses?
-12. Match length target? (A slow pace suggests 25–45 minutes.)
-13. Campaign: yes or no, and if yes, after skirmish is complete?
+1. **Faction identities.** You said the two factions stay "the same as before". The space design
+   had *a fleet centred on a huge mothership* vs. *slowly expanding aliens*. A wasteland version
+   could be a **mobile war-rig/convoy faction** (base on wheels, vehicle-heavy) vs. a
+   **settler/cult faction that spreads territory** (cheap, numerous, holds ground). Is that the
+   idea, or something else? Names?
+2. **Which faction is built first?**
+3. **Workforce:** where does it come from? (Housing that generates it over time? A population
+   cap? Recruited at a building?) Is it spent and gone, or "occupied" while a unit lives (like
+   supply)?
+4. **Gathering:** how are oil and metal collected? (Oil wells/derricks on oil fields, scrap
+   piles for metal? Harvester vehicles or workers?) Do nodes run out?
+5. **Fuel rules:** what happens at 0 fuel (vehicle stops, slows, can't attack)? How do vehicles
+   refuel (at buildings, tanker units, automatically)?
+6. **Vehicle modification:** done where and when (workshop building, in-match, pre-game)? Slot-
+   based (weapon, armor, engine)? Does it cost metal?
+7. **Infantry:** are there non-vehicle units (cheap, workforce-only, no fuel)?
+8. **Unit and building roster** for the first faction (roughly 4–6 of each to start?).
+9. **Tech progression:** tiers gated by buildings, or by metal?
+10. **AI difficulty levels** for the 1v1 opponent?
+11. **Settings contents:** which audio sliders (master/music/effects), video options (window
+    mode, resolution, vsync), and is input = key rebinding?
+12. **Match length target?** (Slower pace suggests 20–30 minutes.)
