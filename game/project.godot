@@ -10,8 +10,8 @@ config_version=5
 
 [application]
 
-config/name="newRTS"
-config/description="Two-faction skirmish RTS."
+config/name="newRTS (asymmetric 2D space RTS, shelved)"
+config/description="Asymmetric 2D space RTS. Shelved after milestone 1."
 run/main_scene="res://match/game_match.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 

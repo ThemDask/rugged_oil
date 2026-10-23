@@ -1,4 +1,7 @@
-# Game design
+# Game design: asymmetric 2D space RTS
+
+> **Status: shelved (2026-10-23).** Paused to build a simpler classic RTS first. Everything
+> below is kept as the reference vision for when this project resumes.
 
 Living design document. **Decided** sections are binding. **Direction** is the intended vision,
 which can still change. **Open questions** are waiting on a decision and shouldn't be guessed at

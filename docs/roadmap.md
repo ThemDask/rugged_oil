@@ -1,5 +1,9 @@
 # Roadmap
 
+> **Status: shelved after M1 (2026-10-23).** M0–M1 are done. M2 onwards is on hold. Note that
+> M2–M9 were written before the space setting was chosen. Revisit them against `design.md`
+> when resuming.
+
 Milestones are ordered by dependency. Each should end with something playable or testable.
 Tick items off as they land.
 

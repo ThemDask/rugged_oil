@@ -1,4 +1,8 @@
-# newRTS
+# newRTS: asymmetric 2D space RTS (shelved)
+
+> **Status: shelved (2026-10-23).** Development paused in favour of a simpler, classic top-down
+> RTS developed in a separate project. Keep this repo as-is; only change it if the user explicitly
+> resumes it. M0 and M1 are complete (see `docs/roadmap.md`).
 
 A 2-faction **space RTS**, **top-down 2D**, built in **Godot 4.6 with GDScript**. Scope: skirmish
 matches the player configures (map, opponents, factions, teams, pre-game customisation) against AI.
