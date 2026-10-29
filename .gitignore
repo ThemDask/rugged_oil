@@ -16,3 +16,6 @@ Desktop.ini
 # Personal, machine-specific Claude notes and settings
 CLAUDE.local.md
 .claude/settings.local.json
+
+# Personal concept art kept out of the repo
+/9e37dea5-d0e3-417c-ae20-315649b46878.png
