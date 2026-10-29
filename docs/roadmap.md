@@ -35,7 +35,7 @@ See `decisions/0005-deterministic-lockstep.md`. Rebuilds M1's movement on the si
 
 ## M3: Base vehicle
 - [ ] Each player starts with exactly one base vehicle at their spawn (no buildings in the game)
-- [ ] Base vehicle in the simulation: big, slow, selectable, health (details: design.md Q11)
+- [ ] Base vehicle in the simulation: big, slow, selectable, health (details: design.md Q10)
 - [ ] Losing your base vehicle = defeat (detection in place, win/lose screen in M6)
 
 ## M4: Economy (oil, workforce, metal)

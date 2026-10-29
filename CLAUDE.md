@@ -7,7 +7,7 @@ lockstep**, so the simulation is deterministic from day one (`docs/decisions/000
 
 Design pillars (details, game flow and open questions in `docs/design.md`):
 - **Three resources:** workforce (used by everything), oil (vehicles and their fuel), metal
-  (advanced units and buildings, mid to late game).
+  (advanced units and upgrades, mid to late game).
 - **The hook:** vehicles are expensive, burn oil to move, and can be heavily modified.
 - **No buildings.** Each player starts with exactly **one base vehicle**, which produces all other
   units and does all upgrades. Destroying the enemy base vehicle wins, and losing yours loses.
