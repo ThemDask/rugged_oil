@@ -21,9 +21,10 @@ Golden-era RTS mechanics (StarCraft, Red Alert 2), at a **slower, simpler pace**
   deterministic lockstep (see `decisions/0005-deterministic-lockstep.md`).
 - **Factions:** 2, asymmetric. **The current scope builds one faction first.** The AI uses the
   same faction until the second one exists.
-  - **Raiders:** **fast but vulnerable.** They salvage resources on the spot.
-  - **Second faction (name TBD):** **sturdier but slower.** They haul resources back to their
-    base vehicle. **Built first.**
+  - **Sturdy faction (name TBD):** **sturdier but slower.** They haul resources back to their
+    base vehicle. **This is the faction being built now.**
+  - **Raiders:** the second faction. **Deliberately left blank for now.** No further design
+    work until the sturdy faction is done.
 - **Start:** each player starts with **exactly one vehicle, their base vehicle**: a big, slow
   vehicle that acts as the whole base.
 - **No buildings.** Nothing is constructed. The base vehicle replaces HQ, factories and
@@ -49,14 +50,14 @@ Golden-era RTS mechanics (StarCraft, Red Alert 2), at a **slower, simpler pace**
 - **Control points:** captured by **standing nearby for a few seconds. Every unit can capture.**
 - **Gathering:** each faction has **one gatherer vehicle type** (a single unit, not separate
   hauler and salvager units), and **only gatherers gather**. Its behaviour depends on the faction:
-  - **Second faction:** the gatherer collects at a site and **brings loads back to the base
+  - **Sturdy faction:** the gatherer collects at a site and **brings loads back to the base
     vehicle**.
-  - **Raiders:** the gatherer **salvages on the spot**: no trip back, but **slower**.
+  - (Raiders, later: salvage on the spot, slower. Noted only, not being designed.)
 - **Tech:** progression is **tiers bought as upgrades on the base vehicle**.
 - **Modifications apply on the spot:** a unit doesn't need to return to the base vehicle to
   be upgraded or modified.
 - **Maps:** small, simple desert maps with sparse resources and a few obstacles.
-- **Engine:** Godot 4.6, GDScript, top-down 2D (see `decisions/0001-godot-gdscript.md`).
+- **Engine:** Phaser 3 + TypeScript, top-down 2D, desktop via Electron (see `decisions/0006-phaser-typescript.md`).
 - **Art:** placeholder shapes drawn in code until real art exists. Logic never depends on art.
 
 ## Game flow (current scope)
@@ -92,9 +93,9 @@ Main menu ── Play ──► Create match (choose map + faction) ── Start
 - Light defences buy time against early rushes but can't hold off a real army.
 
 ### Factions
-- **Raiders:** fast, vulnerable, salvage on the spot. Hit-and-run, hunt gatherers.
-- **Second faction (name TBD):** sturdy, slow, haul resources back to the base vehicle.
-  Defensive, convoy-oriented. Built first.
+- **Sturdy faction (name TBD):** sturdy, slow, hauls resources back to the base vehicle.
+  Defensive, convoy-oriented. The current focus.
+- **Raiders:** left blank on purpose until the sturdy faction is done.
 
 ### Economy
 Sparse resources mean map control matters. Without buildings, "expansion" means sending
@@ -116,37 +117,34 @@ Scrapped for now, kept for possible later use. Not part of the current design.
 
 ## Open questions
 
-### Factions
-1. **Second faction:** name and theme (sturdy, slow, hauls). Base vehicle names for both?
-
 ### Economy
-2. **Control points:** neutral at match start? How many per map (e.g. 5–7 on a small map)? How
+1. **Control points:** neutral at match start? How many per map (e.g. 5–7 on a small map)? How
    much workforce per point? Can a contested point be neutralised before it's taken?
-3. **Resource sites:** how much does one site hold? Roughly how many fuel and scrap sites per map?
-4. **Gatherer confirmation:** "only gatherers gather" (the voice transcript read "not only the
+2. **Resource sites:** how much does one site hold? Roughly how many fuel and scrap sites per map?
+3. **Gatherer confirmation:** "only gatherers gather" (the voice transcript read "not only the
    gatherers", which we interpreted as "only the gatherers"). Correct?
 
 ### Base vehicle
-5. **Repair:** who repairs it (dedicated mechanic unit, itself over time, an upgrade)? Does it
+4. **Repair:** who repairs it (dedicated mechanic unit, itself over time, an upgrade)? Does it
     cost resources (metal?)?
-6. **Production while moving:** do new units appear beside it as it drives, and can it be
+5. **Production while moving:** do new units appear beside it as it drives, and can it be
     given a rally point?
 
 ### Modifications and tech
-7. **Scope of a modification:** is it **per individual unit** (this buggy gets armor plating)
+6. **Scope of a modification:** is it **per individual unit** (this buggy gets armor plating)
     or **per unit type** (all buggies get it)?
-8. **Mod slots:** fixed slots (weapon, armor, engine...) with one choice each, or a
+7. **Mod slots:** fixed slots (weapon, armor, engine...) with one choice each, or a
     free list of upgrades? Can a mod be swapped later?
-9. **Mod and tier costs:** which resources (metal for mods, fuel plus workforce for tiers)? How
+8. **Mod and tier costs:** which resources (metal for mods, fuel plus workforce for tiers)? How
     many tiers (e.g. 3)?
 
 ### Units
-10. **Infantry:** are there non-vehicle units (cheap, workforce-only, no fuel, good at
+9. **Infantry:** are there non-vehicle units (cheap, workforce-only, no fuel, good at
     capturing points)?
-11. **Unit roster** for the first faction (roughly 4–6 units to start?).
+10. **Unit roster** for the first faction (roughly 4–6 units to start?).
 
 ### Match and options
-12. **AI difficulty levels** for the 1v1 opponent?
-13. **Settings contents:** which audio sliders (master/music/effects), video options (window
+11. **AI difficulty levels** for the 1v1 opponent?
+12. **Settings contents:** which audio sliders (master/music/effects), video options (window
     mode, resolution, vsync), and is input = key rebinding?
-14. **Match length target?** (Slower pace suggests 20–30 minutes.)
+13. **Match length target?** (Slower pace suggests 20–30 minutes.)

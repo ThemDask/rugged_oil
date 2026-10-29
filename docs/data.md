@@ -2,78 +2,74 @@
 
 ## Where data lives
 
-All static game data is stored as **Godot custom Resources (`.tres`)** under `game/content/`. The
-classes that define their shape are in `game/core/defs/`. See
-`decisions/0002-game-data-as-resources.md` for why this beats JSON or a database here.
+All static game data is JSON under `content/`. Its shape is defined by TypeScript types in
+`src/data/types.ts`, and it's checked by `src/data/validate.ts` (run by the test suite and logged
+at startup). Vite bundles every `content/**/*.json` file into the game at build time
+(`src/data/content.ts`). See `decisions/0002-game-data-as-resources.md` and
+`decisions/0006-phaser-typescript.md` for why plain text data and not a database.
 
 ```
 content/
-  rules.tres                    GameRules: resource types (fuel, workforce, metal), starting
-                                resources, supply cap
+  rules.json                      GameRules: resource types (workforce, fuel, metal),
+                                  starting resources, supply cap
   factions/
     faction_a/
-      faction.tres              FactionDef
-      units/*.tres              UnitDef (weapons embedded as WeaponDef sub-resources)
-      buildings/*.tres          BuildingDef
+      faction.json                FactionDef
+      units/*.json                UnitDef (weapons inline)
     (second faction later, same structure)
-  maps/<map>/map.tres           MapDef, pointing at the map scene next to it
+  maps/<map>/map.json             MapDef: size, obstacles, spawns (background image later)
 ```
 
-Folder placement is for humans. `GameData` scans `content/` recursively and classifies each file by
-its class, so files can be moved around freely.
+Every file has a `"type"` field (`rules`, `faction`, `unit` or `map`), so folder placement is for
+humans only. The registry classifies files by `type`.
 
 ## Definition types
 
-| Class | Key fields |
+| Type | Key fields |
 |---|---|
-| `GameRules` | `resource_types`, `starting_resources`, `supply_cap` |
-| `FactionDef` | `id`, `display_name`, `color`, `starting_units`, `starting_buildings` |
-| `EntityDef` (base) | `id`, `faction`, `display_name`, `cost`, `build_time`, `max_health`, `armor`, `sight_range`, `requires`, `tags`, `weapons`, `scene`, `icon` |
-| `UnitDef` | + `move_speed`, `radius`, `supply` |
-| `BuildingDef` | + `footprint`, `produces`, `provides_supply`, `is_dropoff` |
-| `WeaponDef` | `damage`, `range`, `cooldown`, `splash_radius`, `bonus_vs_tags` |
-| `MapDef` | `id`, `display_name`, `max_players`, `scene` (root uses the `GameMap` script) |
-
-## Making a map
-
-A map is a scene whose root uses `match/game_map.gd` (see `content/maps/test_map/`):
-
-- set `size_tiles` on the root;
-- add obstacles as `StaticBody2D` + `CollisionShape2D` (axis-aligned `RectangleShape2D`) anywhere
-  under `NavigationRegion2D`. Navigation is baked from them automatically on load;
-- add one `Marker2D` per player under `SpawnPoints`;
-- create a `MapDef` `.tres` next to it pointing at the scene.
+| `rules` | `resourceTypes`, `startingResources`, `supplyCap` |
+| `faction` | `id`, `displayName`, `color`, `startingUnits` (exactly one base vehicle) |
+| `unit` | `id`, `faction`, `displayName`, `tags`, `cost`, `buildTime`, `requires`, `maxHealth`, `armor`, `sightRange`, `weapons`, `isBase`, `produces`, `moveSpeed`, `acceleration`, `turnRate`, `radius`, `supply` |
+| weapon (inline in a unit) | `displayName`, `damage`, `range`, `cooldown`, optional `splashRadius`, `projectileSpeed`, `bonusVsTags` |
+| `map` | `id`, `displayName`, `maxPlayers`, `width`, `height`, `groundColor`, optional `background`, `obstacles`, `spawns` |
 
 ## Units of measure
 
-Data is written in **tiles**, never pixels, so art resolution can change without rebalancing.
-Distances (`sight_range`, `radius`, weapon `range`, `splash_radius`) are in tiles, `move_speed` and
-`projectile_speed` in tiles per second, times (`build_time`, `cooldown`) in seconds.
-`footprint` is in tiles. The view converts to pixels via `Tiles` (32 px per tile). The
-simulation converts data to integer sim units (1 tile = 1000) when a match starts, so `.tres`
-values can stay human-friendly decimals while simulation maths stays integer.
+Data is written in **tiles and seconds**, never pixels:
+- distances (`sightRange`, `radius`, weapon `range`, `splashRadius`, map sizes, obstacle and spawn
+  coordinates) in **tiles**;
+- `moveSpeed` and `projectileSpeed` in tiles per second, `acceleration` in tiles per second per
+  second;
+- `turnRate` in **degrees per second**;
+- `buildTime` and `cooldown` in seconds.
+
+The simulation converts these to integer sim units (1 tile = 1000) once, when a unit spawns. The
+view draws 1 tile as 32 px.
 
 ## Rules
 
-- `id`s are globally unique, `lower_snake_case`, prefixed per faction: `a_worker`, `b_barracks`.
-- Cross-references (`faction`, `requires`, `produces`, `starting_units`) use ids, never paths.
-- `cost` keys must be listed in `GameRules.resource_types`.
-- `ContentValidator` (run by the test suite) enforces all of the above, plus sane values.
+- `id`s are globally unique, lower_snake_case, prefixed per faction: `a_base`, `a_buggy`.
+- Cross-references (`faction`, `requires`, `produces`, `startingUnits`) use ids.
+- `cost` keys must be listed in `rules.resourceTypes`.
+- Every faction starts with exactly one base vehicle (`isBase: true`). Only base vehicles may
+  `produce`.
+- Map spawns must be inside the map and not inside an obstacle, one per player.
 
 ## Adding a unit
 
-1. Create `content/factions/<faction>/units/<name>.tres` with the `UnitDef` script, either in the
-   Godot inspector (*New Resource → UnitDef*) or by copying an existing file.
-2. Give it a unique `id` and its `faction`. Add its id to some building's `produces` list.
-3. Run `./tools/run_tests.ps1`.
+1. Copy a file in `content/factions/<faction>/units/`, give it a new `id`.
+2. Add its id to the base vehicle's `produces` list.
+3. Run `npm test`.
 
-## Balancing in bulk (later)
+## Making a map
 
-If editing stats one file at a time gets tedious, add a `tools/` script that exports all defs
-to CSV for spreadsheet editing and imports them back. The `.tres` files stay the source of
-truth.
+1. Create `content/maps/<map_id>/map.json` (copy `test_map`).
+2. Set `width`/`height` in tiles, add `obstacles` as tile rectangles `{x, y, w, h}` and one
+   `spawn` per player.
+3. Optional background image: put it in `public/assets/`, load it in `BootScene.preload()` under
+   a key, and set `"background": "<key>"`. It is stretched over the whole map.
+4. Run `npm test`.
 
 ## Runtime/player data
 
-Not stored in `content/`. Settings use `ConfigFile` at `user://settings.cfg`, and match setups and
-replays go to `user://` (see `architecture.md`, Persistence).
+Not in `content/`. Settings are stored in `localStorage`; replays later (see `architecture.md`).

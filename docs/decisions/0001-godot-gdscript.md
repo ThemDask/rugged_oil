@@ -1,6 +1,6 @@
 # 0001: Godot 4 with GDScript
 
-**Status:** accepted · 2026-10-21
+**Status:** superseded by 0006 (Phaser + TypeScript) · 2026-10-21
 
 ## Context
 We need an engine that suits a small-team RTS and works well with an AI coding assistant, which

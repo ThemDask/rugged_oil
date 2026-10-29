@@ -1,0 +1,21 @@
+{
+  "type": "map",
+  "id": "test_map",
+  "displayName": "Test Map",
+  "description": "Small desert development map with a few rock formations.",
+  "maxPlayers": 2,
+  "width": 64,
+  "height": 40,
+  "groundColor": "#b8945f",
+  "obstacles": [
+    { "x": 28, "y": 15, "w": 8, "h": 10 },
+    { "x": 16, "y": 3, "w": 2, "h": 14 },
+    { "x": 45, "y": 23, "w": 2, "h": 14 },
+    { "x": 17, "y": 31, "w": 6, "h": 4 },
+    { "x": 41, "y": 5, "w": 6, "h": 4 }
+  ],
+  "spawns": [
+    { "x": 6, "y": 20 },
+    { "x": 57, "y": 20 }
+  ]
+}

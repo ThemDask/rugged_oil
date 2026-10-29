@@ -1,0 +1,22 @@
+{
+  "type": "unit",
+  "id": "a_buggy",
+  "faction": "faction_a",
+  "displayName": "Buggy",
+  "description": "Placeholder light vehicle.",
+  "tags": ["vehicle", "light"],
+  "cost": { "fuel": 100, "workforce": 2 },
+  "buildTime": 15,
+  "requires": [],
+  "maxHealth": 120,
+  "armor": 1,
+  "sightRange": 8,
+  "weapons": [{ "displayName": "Machine Gun", "damage": 6, "range": 5, "cooldown": 0.6 }],
+  "isBase": false,
+  "produces": [],
+  "moveSpeed": 6,
+  "acceleration": 5,
+  "turnRate": 200,
+  "radius": 0.45,
+  "supply": 2
+}

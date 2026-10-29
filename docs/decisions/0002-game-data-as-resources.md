@@ -1,6 +1,6 @@
 # 0002: Static game data as Godot Resources (.tres)
 
-**Status:** accepted · 2026-10-21
+**Status:** file format superseded by 0006 (now JSON); the reasoning against a database still applies · 2026-10-21
 
 ## Context
 Unit, building, weapon and faction stats must be easy to add and rebalance. The options were JSON

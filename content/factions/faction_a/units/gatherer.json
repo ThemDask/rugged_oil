@@ -1,0 +1,22 @@
+{
+  "type": "unit",
+  "id": "a_gatherer",
+  "faction": "faction_a",
+  "displayName": "Gatherer",
+  "description": "Collects fuel and scrap and hauls it back to the base vehicle. Placeholder stats.",
+  "tags": ["vehicle", "gatherer"],
+  "cost": { "fuel": 50, "workforce": 1 },
+  "buildTime": 12,
+  "requires": [],
+  "maxHealth": 150,
+  "armor": 1,
+  "sightRange": 7,
+  "weapons": [],
+  "isBase": false,
+  "produces": [],
+  "moveSpeed": 3,
+  "acceleration": 2,
+  "turnRate": 120,
+  "radius": 0.6,
+  "supply": 1
+}

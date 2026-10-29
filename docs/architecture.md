@@ -1,130 +1,128 @@
 # Architecture
 
+Phaser 3 + TypeScript, bundled with Vite, tested with Vitest. See
+`decisions/0006-phaser-typescript.md` (engine) and `decisions/0005-deterministic-lockstep.md`
+(simulation).
+
 ## Goals
 
 - **Deterministic, lockstep-ready:** the same commands always produce the same game, on every
-  machine. Multiplayer (later) exchanges only Commands. See `decisions/0005-deterministic-lockstep.md`.
-- **Content-driven:** adding or rebalancing a unit means editing data, not code.
-- **Testable:** game rules run headlessly in the test suite.
-- **Fair, replaceable AI:** the AI plays through the same interface as the human.
+  machine. Multiplayer (later) exchanges only Commands.
+- **Content-driven:** adding or rebalancing a unit means editing JSON, not code.
+- **Testable:** all game rules run in plain Node, with no engine.
+- **Fair, replaceable AI:** the AI plays through the same Commands as the human.
 
 ## Layers
 
 ```
-   player input (ui/, systems/selection)        ai/        network relay (later)
-                 │                                │                 │
-                 └──────────────► Command ◄───────┴─────────────────┘
-                                     │  scheduled for tick T
-                                     ▼
-┌──────────────────────────── Simulation (core/sim/) ─────────────────────────────┐
-│ fixed tick · integer maths · seeded RNG · entities processed in id order        │
-│ owns ALL game state: units, buildings, resources, fuel, production, combat      │
-│ tile grid + A* pathfinding · deterministic separation · per-tick checksum       │
+   mouse/keyboard (client/systems/Selection)      ai/AiController      network relay (later)
+                 │                                       │                     │
+                 └────────────────► Command ◄────────────┴─────────────────────┘
+                                      │  client/systems/CommandBridge → world.schedule()
+                                      ▼
+┌──────────────────────────── src/sim/  (SimWorld) ───────────────────────────────┐
+│ fixed tick (20/s) · integer maths · seeded RNG · units processed in id order    │
+│ owns ALL game state · grid + A* · vehicle movement · checksum                   │
+│ never imports Phaser or anything from src/client                                │
 └──────────────────────────────────────┬──────────────────────────────────────────┘
-                                       │ read-only (+ coarse events)
+                                       │ read-only
                                        ▼
-┌────────────────────── View: Godot Nodes ──────────────────────┐
-│ entities/ draw sim entities, interpolating between ticks      │
-│ ui/ HUD and menus · camera · effects · audio                  │
-└────────────────────────────────────────────────────────────────┘
-        stats come from:  autoload/GameData ◄── content/*.tres (typed by core/defs/*)
+┌──────────────────────── src/client/  (Phaser) ─────────────────────────┐
+│ scenes · views (UnitView, MapView) interpolate between ticks · camera  │
+│ input → Commands · HUD and menus · settings                            │
+└─────────────────────────────────────────────────────────────────────────┘
+        stats come from: src/data/GameData ◄── content/**/*.json (typed by src/data/types.ts)
 ```
 
-### `core/sim/`: the simulation (all game state)
-Plain GDScript classes (`RefCounted`), no Nodes and no engine physics or navigation. It advances
-in fixed ticks (target 20/s), applies the Commands scheduled for each tick, then runs its systems
-in a fixed order. It uses integer sim units (1 tile = 1000) and one seeded RNG. It can produce a
-checksum of its full state. A whole match can run headlessly, and that's how we test determinism.
+## Folders
 
-### `core/`: types and pure rules
-Resource classes for static data (`core/defs`), match setup types (`core/setup`), Commands
-(`core/commands`) and helpers. No dependency on the scene tree.
+| Folder | Role | May import Phaser? |
+|---|---|---|
+| `src/sim/` | The simulation: all game state, deterministic. `world.ts` (tick, commands, checksum), `grid.ts` (tiles, clearance, A*), `movement.ts`, `unit.ts`, `formation.ts`, `rng.ts`, `math.ts`, `commands.ts`, `setup.ts` (builds a world from a MatchConfig). | **No** |
+| `src/data/` | Content types, the `GameData` registry, the content validator. `content.ts` bundles `content/**/*.json` via `import.meta.glob`. | **No** |
+| `src/setup/` | `MatchConfig` / `PlayerSlot`, the output of the match setup screen. | **No** |
+| `src/ai/` | Computer opponents. They read the sim and return Commands. | **No** |
+| `src/client/` | Everything Phaser: `main.ts`, `scenes/`, `views/`, `systems/` (camera, selection, command bridge), `ui/` (buttons, modals, settings, pause menu, debug overlay), `settings.ts`, `scale.ts` (pixels per tile, sim↔pixel conversion). | Yes |
+| `content/` | Game data as JSON (see `data.md`). | n/a |
+| `public/assets/` | Images, audio, fonts, served as-is. | n/a |
+| `tests/` | Vitest: sim, data, determinism, architecture rules. | No (client isn't unit-tested) |
+| `electron/` | Desktop wrapper boilerplate (not wired up yet). | n/a |
+| `server/` *(later)* | Node lockstep relay (M10). Imports `src/sim` types directly. | n/a |
 
-### `content/`: data
-`.tres` instances of the `core/defs` classes. `GameData` scans this folder recursively at startup
-and indexes every definition by `id`. See `data.md`.
-
-### `entities/`: views of sim entities
-One scene per unit or building archetype. Each view follows one sim entity by id: it reads its
-position, facing and health, interpolates between the last two ticks, and draws a placeholder.
-**Views never change game state.**
-
-### `systems/`: Node-side systems
-Things that need the engine: `camera`, `selection` (turns mouse input into Commands) and the
-bridge that feeds Commands into the simulation (`commands`). Gameplay rules such as economy,
-production and combat live inside `core/sim/` as simulation systems, not here.
-
-### `ai/`: computer players
-One AI controller per AI `PlayerSlot`. It reads simulation state and **emits Commands**. For
-lockstep, the AI must itself be deterministic (sim RNG only, decisions on tick boundaries) or run
-on one machine only and send its Commands like a player. To be decided before multiplayer.
-
-### `match/`: orchestration
-Takes a `MatchConfig`, creates the simulation (map grid, players, starting HQ and units), drives
-its tick loop from `_physics_process`, spawns and removes views, and reports win or loss.
-
-### `ui/`
-`menus/` (full screens: main menu, match setup), `dialogs/` (modals: settings, pause),
-`hud/` (in-match overlay), `widgets/` (shared pieces). UI never changes game state directly:
-it issues Commands.
+`tests/architecture.test.ts` **enforces** the "no Phaser" column, and that `src/sim/` uses no
+non-deterministic APIs.
 
 ## Scene flow
 
 ```
-ui/menus/main_menu.tscn ──► ui/menus/match_setup.tscn ──► match/game_match.tscn
-        ▲                     (builds a MatchConfig,          │
-        │                      sets GameMatch.pending_config) │ Esc: ui/dialogs/pause_menu
-        └────────────────── Exit (change_scene) ◄─────────────┘
+Boot ──► MainMenu ──► MatchSetup ──► Match (+ Hud on top)
+            ▲            │ Back        │ Esc → PauseMenu → Exit
+            └────────────┴─────────────┘
 ```
 
-Screens are switched with `get_tree().change_scene_to_file()`. The match scene is self-contained,
-so leaving it frees all match state. Modals (settings, pause) are scenes under `ui/dialogs/` and
-are instanced on top of the current screen.
+- **Boot:** loads assets, validates content (logs problems), applies settings.
+- **MainMenu:** Play, Settings (modal), Exit (`window.close()`, which works under Electron).
+- **MatchSetup:** map and faction pickers. Builds a `MatchConfig` (with a fresh seed) and starts
+  Match.
+- **Match:** `createWorld(config, gameData)`, then a fixed-step loop in `update()`: accumulate
+  frame time, step the sim every 50 ms (catching up at most 5 ticks per frame), then update views
+  with the interpolation factor. Launches `Hud`.
+- **Hud:** a separate scene so it isn't affected by the match camera's zoom. Debug overlay (FPS,
+  tick, checksum, selection) and the Esc menu. In single-player the Esc menu pauses the sim.
+
+Modals (`ui/modal.ts`) are containers with a click-swallowing backdrop, created on top of the
+current scene.
 
 ## Commands and ticks
 
-Every state-changing action is a `Command` (`MoveCommand`, `AttackCommand`, `BuildCommand`,
-`TrainCommand`, ...) carrying `player_id`, its data, and the `tick` it executes on.
+Commands are plain data objects (`src/sim/commands.ts`), e.g.
+`{ type: 'move', playerId, unitIds, target }`, with `tick` and `sequence` assigned when scheduled.
 
-- Commands are **orders** (one per player decision), not per-frame state changes.
-- **Single-player:** local Commands are scheduled for the next tick.
-- **Multiplayer (later):** Commands are batched per **turn** (e.g. 150 ms, several ticks),
-  exchanged through a relay server with a 2-turn input delay, and applied by every client in
-  the same order (tick, player id, sequence). State checksums detect desyncs.
-- The simulation **validates every Command** (ownership, costs, requirements). Invalid Commands
-  are dropped identically on every machine.
+- They're **orders** (one per player decision), not per-frame state changes.
+- **Single-player:** `CommandBridge.issue()` schedules for the next tick.
+- **Multiplayer (later):** Commands are batched per turn (~150 ms), exchanged through a relay
+  server with a 2-turn input delay, and applied by every client in the same order (tick, player,
+  sequence). Checksums detect desyncs.
+- The simulation **validates every Command** (shape, ownership). Invalid ones are dropped
+  identically everywhere.
 - A command log plus `MatchConfig` (with seed) is a **replay**.
 
-## Determinism rules (simulation code)
+## Determinism rules (`src/sim/`)
 
-1. No floats in simulation state or rule maths. Integers only, sim units of 1/1000 tile.
-2. No engine physics, navigation, timers or `randf()` in the simulation. Use the sim RNG.
-3. Iterate entities in ascending id. Never depend on Node order or frame timing.
-4. Everything the simulation needs comes from Commands, `MatchConfig` and content data.
-5. Every change to simulation rules keeps the determinism test passing.
+1. Integers only for state and rule maths. Positions in sim units (1 tile = 1000), angles in
+   4096 steps per turn, speeds in sim units per tick. Divide with `idiv()`. Keep intermediates
+   far below 2^53.
+2. No `Math.random/sin/cos/tan/atan/sqrt/pow/hypot/exp/log`, no `Date`, no `performance.now`.
+   Use `sim/math.ts` and `world.rng`.
+3. Data floats (tiles, seconds) are converted to integers **once at spawn** with plain arithmetic
+   and `Math.round`, which are exact and identical everywhere.
+4. Iterate units in ascending id (`world.units` is a Map in insertion order). Sort anything
+   else that comes from a Set or object keys.
+5. Everything the sim needs comes from Commands, the `MatchConfig` and content data. Never from
+   the client, the clock or the frame rate.
+6. Keep `tests/determinism.test.ts` passing.
 
-## Autoloads
+## Scale
 
-| Name | Purpose |
-|---|---|
-| `EventBus` | Coarse global signals (match started/ended, entity spawned/destroyed, command issued). |
-| `GameData` | Read-only registry of all content definitions, plus `validate()`. |
-| `Settings` *(M2)* | Player settings (audio, video, input). Loads and saves `user://settings.cfg` and applies them. |
-
-Keep the autoload list short. Match-specific state belongs to the simulation and the match scene.
+- Simulation: 1 tile = 1000 sim units.
+- View: 1 tile = `TILE_SIZE` = **32 px** (`src/client/scale.ts`). Changing it changes only the
+  look, never gameplay.
 
 ## Persistence
 
 | Data | Where | Format |
 |---|---|---|
-| Static game data | `res://content` | `.tres` Resources (see `data.md`) |
-| Player settings | `user://settings.cfg` | `ConfigFile` |
-| Last match setup | `user://last_match.tres` | `MatchConfig` resource |
-| Replays (later) | `user://replays/` | `MatchConfig` + command log |
+| Static game data | `content/` (bundled at build time) | JSON (see `data.md`) |
+| Player settings | `localStorage` key `rugged-oil.settings` | JSON |
+| Replays (later) | file / storage | `MatchConfig` + command log |
 
 ## Testing
 
-`game/tests/run_tests.gd` is a small built-in runner (no plugins), run headlessly by
-`tools/run_tests.ps1`. It discovers `test_*.gd` files and treats script errors during a test as
-failures. Beyond unit tests, the key test is the **determinism test**: run a match twice from
-the same seed and commands, and assert identical checksums at every tick.
+`npm test` runs Vitest in Node:
+- unit tests for `src/sim/` (math, grid and A*, formation, world);
+- `content.test.ts`: all content is valid, and the validator catches each kind of mistake;
+- `determinism.test.ts`: two runs of a scripted match produce identical checksums every tick;
+- `architecture.test.ts`: the import and determinism rules above.
+
+The client (`src/client/`) is checked by `npm run typecheck`, `npm run build` and by playing it
+(`npm run dev`).

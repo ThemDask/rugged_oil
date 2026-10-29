@@ -1,0 +1,6 @@
+{
+  "type": "rules",
+  "resourceTypes": ["workforce", "fuel", "metal"],
+  "startingResources": { "workforce": 20, "fuel": 300, "metal": 0 },
+  "supplyCap": 200
+}

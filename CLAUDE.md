@@ -1,9 +1,10 @@
 # Rugged Oil
 
-A **top-down 2D RTS** on a post-apocalyptic desert Earth (Mad Max vibes), built in **Godot 4.6 with
-GDScript**. Golden-era RTS mechanics (StarCraft, Red Alert 2) at a **slower, simpler pace**.
-Skirmish, **1v1 vs AI** for now. **Multiplayer comes in a much later sprint via deterministic
-lockstep**, so the simulation is deterministic from day one (`docs/decisions/0005-deterministic-lockstep.md`).
+A **top-down 2D RTS** on a post-apocalyptic desert Earth (Mad Max vibes), built with **Phaser 3 +
+TypeScript** (Vite, Vitest; desktop via Electron later). Golden-era RTS mechanics (StarCraft, Red
+Alert 2) at a **slower, simpler pace**. Skirmish, **1v1 vs AI** for now. **Multiplayer comes in a
+much later sprint via deterministic lockstep**, so the simulation is deterministic from day one
+(`docs/decisions/0005-deterministic-lockstep.md`).
 
 Design pillars (details, game flow and open questions in `docs/design.md`):
 - **Three resources:** workforce (used by everything), fuel (spent to produce vehicles), metal
@@ -12,106 +13,85 @@ Design pillars (details, game flow and open questions in `docs/design.md`):
   moving is parked: fuel is only a production cost.)
 - **No buildings.** Each player starts with exactly **one base vehicle**, which produces all other
   units and does all upgrades. Destroying the enemy base vehicle wins, and losing yours loses.
-- **Two asymmetric factions**, but **one faction is built first**.
+- **Two asymmetric factions**, but **only the first (sturdy) faction is being built**. The
+  second (Raiders) is deliberately left blank.
 - **Small desert maps** with sparse resources and a few obstacles.
 - Art is code-drawn placeholders for now.
 
-Current scope: roadmap M1.5 (deterministic simulation core), then M2–M6 (menus, base vehicle, economy, production, combat) for one faction.
-Content in `game/content/` is a **placeholder** (`faction_a`, worker, buggy, and an HQ building that
-the base vehicle will replace in M3) until the user defines the faction. Don't invent design specifics; add open questions to `docs/design.md` instead.
-The earlier space RTS concept is archived in `docs/archive/` and isn't current.
+Content in `content/` is a **placeholder** (`faction_a` with a base vehicle, gatherer and buggy)
+until the user defines the faction. Don't invent design specifics; add open questions to
+`docs/design.md` instead. The earlier space RTS concept is archived in `docs/archive/`, and the
+old Godot project is on the local branch `archive/godot`; neither is current.
 
 ## Commands
 
-```powershell
-./tools/run_tests.ps1                 # full headless test suite (exit code 0 = pass)
-./tools/run_tests.ps1 -Filter content # only test files/methods whose name contains "content"
+```bash
+npm run dev         # dev server at http://localhost:8080 (hot reload)
+npm test            # Vitest: sim, content, determinism, architecture rules
+npm run typecheck   # tsc over src/ and tests/
+npm run build       # typecheck + production bundle in dist/
 ```
 
-The script finds Godot via `-Godot <path>`, then `$env:GODOT`, then `godot` on PATH. Use the
-**console** build of Godot (`*_console.exe` on Windows) so output reaches the terminal.
-Machine-specific paths live in `CLAUDE.local.md` (gitignored).
-
-**Run the tests after every change to GDScript or content.** The content test validates every
-`.tres` definition, so it catches broken ids and bad stats too.
+**Run `npm test` and `npm run typecheck` after every change.** The content test validates every
+JSON file, and the architecture test enforces the determinism rules.
 
 ## Repository layout
 
 ```
-docs/                 design.md (what the game is), architecture.md (how it is built),
-                      data.md (how game data works), roadmap.md, decisions/ (ADRs),
-                      archive/ (old concepts, not current)
-tools/                developer scripts (test runner, future data import/export)
-game/                 the Godot project, res:// root
-  autoload/           singletons: EventBus (global signals), GameData (content registry)
-  core/               engine-light game rules and types; no scene-tree dependencies
-    sim/              THE simulation: all game state, fixed tick, integer maths (M1.5)
-                      (Tiles = world scale, Formation = group spreading, ContentValidator)
-    defs/             Resource classes describing static data (UnitDef, BuildingDef, MapDef, ...)
-    setup/            MatchConfig + PlayerSlot: what the skirmish setup screen produces
-    commands/         Command base class and its subclasses (MoveCommand, ...)
-  content/            game data as .tres: rules, factions, units, buildings, maps
-  match/              GameMatch (runs a skirmish, current run scene) and GameMap (map base script)
-  entities/           unit / building / projectile scenes and their node scripts
-  systems/<name>/     one folder per gameplay system: camera, commands (CommandDispatcher),
-                      selection; later economy, production, combat
-  ai/                 computer opponents (issue Commands exactly like the player)
-  ui/                 menus/ (main menu, match setup), dialogs/ (settings, pause modals),
-                      hud/, widgets/
-  assets/             art, audio, fonts, shaders (human-made; don't generate binaries here)
-  tests/              run_tests.gd runner, test_case.gd base, unit/ tests
+docs/            design.md (what the game is), architecture.md (how it's built), data.md,
+                 roadmap.md, decisions/ (ADRs), archive/ (old concepts, not current)
+src/sim/         THE simulation: all game state, fixed tick, integer maths. No Phaser.
+src/data/        content types, GameData registry, validator. No Phaser.
+src/setup/       MatchConfig + PlayerSlot. No Phaser.
+src/ai/          computer opponents: read the sim, return Commands. No Phaser.
+src/client/      everything Phaser: main.ts, scenes/, views/, systems/, ui/, settings, scale
+content/         game data as JSON (rules, factions, units, maps)
+public/assets/   images, audio, fonts
+tests/           Vitest (sim/, content, determinism, matchConfig, architecture)
+electron/        desktop wrapper boilerplate (not wired up yet)
 ```
 
 ## Architecture rules (keep these)
 
-1. **Data, not code, holds balance.** Unit/building/weapon/faction stats live in `game/content/*.tres`
-   as typed Resources. Never hard-code a stat in a script. See `docs/data.md`.
-   **Data is in tiles, not pixels** (distances in tiles, speeds in tiles per second). Convert only
-   through `Tiles` (`core/tiles.gd`, 32 px per tile).
-2. **Cross-references use ids** (`StringName`, e.g. `&"a_worker"`), not resource paths. Ids are
-   globally unique, lower_snake_case and prefixed per faction (`a_`, `b_`).
-3. **All game-state changes go through `Command` objects** (move, attack, build, train, ...). Player
-   input and AI produce the same Commands. This keeps AI fair and makes replays and multiplayer
-   possible later.
-4. **Rules in `core/` and `systems/` should be testable headlessly.** Prefer plain classes
-   (`RefCounted`/`Resource`) for logic and keep Nodes thin (movement, visuals, input). If a rule can't
-   be tested without spawning scenes, think about extracting it.
-5. **EventBus is for coarse, game-level events** (match started, entity destroyed). Use direct
-   signals between nearby nodes.
-6. **The simulation is deterministic.** All game state lives in `core/sim/`. Inside it: integers
-   only (1 tile = 1000 sim units, no float state or float trig), no Nodes, physics, navigation or
-   `randf()` (use the sim RNG), entities iterated in id order. Nodes are views that read sim state
-   and never change it. Full rules: "Determinism rules" in `docs/architecture.md`.
-7. **The game is two factions, but nothing should assume exactly two.** Iterate over
-   `GameData.factions()`, don't branch on faction ids.
+1. **Data, not code, holds balance.** Stats live in `content/**/*.json`, typed by
+   `src/data/types.ts`. Never hard-code a stat. Data is in **tiles and seconds** (turn rate in
+   degrees per second), never pixels. See `docs/data.md`.
+2. **Cross-references use ids** (globally unique, lower_snake_case, prefixed per faction: `a_`).
+3. **All game-state changes go through Commands** (`src/sim/commands.ts`). Player input and AI
+   produce the same Commands, through `CommandBridge` into `SimWorld.schedule()`.
+4. **The simulation is deterministic.** All game state lives in `src/sim/`. There: integers only
+   (1 tile = 1000 sim units, angles 4096 steps/turn, `idiv()` for division), no Math
+   float functions, `Math.random`, `Date` or `performance.now` (use `sim/math.ts`, `world.rng`),
+   units iterated in id order. Full rules: "Determinism rules" in `docs/architecture.md`.
+5. **`src/sim`, `src/data`, `src/setup`, `src/ai` never import Phaser or `src/client`.**
+   Views read sim state and never change it. `tests/architecture.test.ts` enforces this.
+6. **Nothing assumes exactly two factions or players**: iterate over `gameData.factions()` and
+   `config.players`.
 
-## GDScript conventions
+## TypeScript conventions
 
-- Godot style guide: tabs, `snake_case` files/functions/vars, `PascalCase` classes, `CONSTANT_CASE`.
-- **Static typing everywhere** (`var hp: int`, `func f(x: float) -> void`). Use typed arrays and
-  dictionaries (`Array[StringName]`, `Dictionary[StringName, int]`).
-- Give a script `class_name` only if other code refers to it by type.
-- Begin each script with a short `##` doc comment saying what it is for.
-- One class per file. File name = class name in snake_case.
+- Strict mode, no `any`. 4-space indent, single quotes, semicolons.
+- `camelCase` for functions and variables, `PascalCase` for classes, types and Phaser scenes
+  (files holding a class or scene are named after it, e.g. `MatchScene.ts`; module files are
+  `camelCase.ts`). `UPPER_CASE` for constants.
+- Sim state is plain data (interfaces and Maps), not classes with hidden state, so it's easy to
+  hash, clone and serialize.
+- Each file starts with a short doc comment saying what it's for.
+- Use `import type` for type-only imports.
 
 ## Tests
 
-- Tests live in `game/tests/**/test_*.gd`, extend `TestCase`, and use `test_*` methods with
-  `assert_*` helpers. A script error inside a test counts as a failure.
-- New rules or systems in `core/`/`systems/` get tests. New content is covered by the content
-  validation test; extend `core/content_validator.gd` when you add new kinds of references.
+- Vitest, in `tests/**/*.test.ts`, running in Node. Test `src/sim`, `src/data`, `src/setup` and
+  `src/ai` directly.
+- New sim rules get unit tests. Anything affecting sim state must keep
+  `tests/determinism.test.ts` passing. Extend `src/data/validate.ts` (and its tests) when content
+  gains new kinds of references.
+- The client is verified by typecheck, build and running it (`npm run dev`).
 
 ## Working agreements
 
-- Don't edit `game/.godot/` (cache) or hand-edit binary files in `assets/`.
-- `*.gd.uid` and `*.import` sidecar files are generated by Godot but **are committed**. When you
-  move or rename a script or asset, move its sidecar with it (or do the move in the Godot editor).
-- `.tscn`/`.tres` are editable text. Keep `ext_resource` ids consistent. Godot adds `uid=` attributes
-  when the file is next saved in the editor, which is fine.
-- **Transitional:** M1 movement still uses Godot navigation (NavigationAgent2D, baked navmesh,
-  RVO avoidance). It is **not deterministic** and gets replaced in M1.5 by sim-side grid A* and
-  separation. Don't build new gameplay on it.
 - Design questions (unit roles, faction identity, numbers) belong to the user: write them as
   open questions in `docs/design.md` instead of inventing answers.
-- Update `docs/` when a change alters architecture or data formats. Record significant decisions as
-  a new ADR in `docs/decisions/`.
+- Update `docs/` when a change alters architecture or data formats. Record significant decisions
+  as a new ADR in `docs/decisions/`.
+- Don't commit `dist/` or `node_modules/`.

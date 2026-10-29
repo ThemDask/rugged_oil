@@ -1,0 +1,22 @@
+{
+  "type": "unit",
+  "id": "a_base",
+  "faction": "faction_a",
+  "displayName": "Base Vehicle",
+  "description": "The whole base on tracks: produces every unit and does all upgrades. Lose it and you lose. Placeholder stats.",
+  "tags": ["vehicle", "base", "heavy"],
+  "cost": {},
+  "buildTime": 1,
+  "requires": [],
+  "maxHealth": 3000,
+  "armor": 4,
+  "sightRange": 10,
+  "weapons": [{ "displayName": "Defence Gun", "damage": 8, "range": 6, "cooldown": 1 }],
+  "isBase": true,
+  "produces": ["a_gatherer", "a_buggy"],
+  "moveSpeed": 1.2,
+  "acceleration": 0.6,
+  "turnRate": 30,
+  "radius": 1.5,
+  "supply": 0
+}
