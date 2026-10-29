@@ -9,14 +9,15 @@ Design pillars (details, game flow and open questions in `docs/design.md`):
 - **Three resources:** workforce (used by everything), oil (vehicles and their fuel), metal
   (advanced units and buildings, mid to late game).
 - **The hook:** vehicles are expensive, burn oil to move, and can be heavily modified.
-- **Two asymmetric factions**, but **one faction is built first**. Each starts with an HQ, and
-  destroying the enemy HQ wins.
+- **No buildings.** Each player starts with exactly **one base vehicle**, which produces all other
+  units and does all upgrades. Destroying the enemy base vehicle wins, and losing yours loses.
+- **Two asymmetric factions**, but **one faction is built first**.
 - **Small desert maps** with sparse resources and a few obstacles.
 - Art is code-drawn placeholders for now.
 
-Current scope: roadmap M1.5 (deterministic simulation core), then M2–M6 (menus, buildings, economy, production, combat) for one faction.
-Content in `game/content/` is a **placeholder** (`faction_a`, worker, HQ) until the user defines
-the faction. Don't invent design specifics; add open questions to `docs/design.md` instead.
+Current scope: roadmap M1.5 (deterministic simulation core), then M2–M6 (menus, base vehicle, economy, production, combat) for one faction.
+Content in `game/content/` is a **placeholder** (`faction_a`, worker, buggy, and an HQ building that
+the base vehicle will replace in M3) until the user defines the faction. Don't invent design specifics; add open questions to `docs/design.md` instead.
 The earlier space RTS concept is archived in `docs/archive/` and isn't current.
 
 ## Commands

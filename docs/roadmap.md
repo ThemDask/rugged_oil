@@ -1,7 +1,7 @@
 # Roadmap: Rugged Oil
 
 Ordered by dependency. Each milestone ends playable or testable. **Current scope = M2–M6 for one
-faction:** a full 1v1 match from main menu to destroying the enemy HQ, preceded by M1.5 so
+faction:** a full 1v1 match from main menu to destroying the enemy base vehicle, preceded by M1.5 so
 everything is built on the deterministic simulation.
 
 ## M0: Foundation ✅
@@ -33,26 +33,25 @@ See `decisions/0005-deterministic-lockstep.md`. Rebuilds M1's movement on the si
 - [ ] Main menu becomes the run scene again
 - [ ] Desert look for the test map
 
-## M3: Buildings and HQ
-- [ ] Building entity configured from a BuildingDef (footprint, health, placeholder look)
-- [ ] Each player starts with their faction's HQ at their spawn
-- [ ] Buildings block navigation (navmesh rebake or obstacles)
-- [ ] Select buildings
+## M3: Base vehicle
+- [ ] Each player starts with exactly one base vehicle at their spawn (no buildings in the game)
+- [ ] Base vehicle in the simulation: big, slow, selectable, health (details: design.md Q11)
+- [ ] Losing your base vehicle = defeat (detection in place, win/lose screen in M6)
 
 ## M4: Economy (oil, workforce, metal)
-- [ ] Per-player resource stock (`systems/economy`), starting resources from GameRules
-- [ ] Resource nodes on maps (oil, metal) and gathering (rules TBD, design.md questions 3–4)
+- [ ] Per-player resource stock in the simulation, starting resources from GameRules
+- [ ] Resource sites on maps (oil, metal) and gathering without buildings (rules TBD, Q3–4)
 - [ ] HUD resource bar
 
-## M5: Construction and production
-- [ ] Build buildings (placement preview, validity, cost) via BuildCommand
-- [ ] Train units at buildings via TrainCommand, production queue (`systems/production`)
+## M5: Production and upgrades
+- [ ] Base vehicle trains units via TrainCommand, with a production queue
+- [ ] Base vehicle upgrades via UpgradeCommand (costs, requirements, tiers TBD: Q6, Q9)
 - [ ] HUD: selection panel and command buttons
 
 ## M6: Combat and victory
 - [ ] AttackCommand, auto-targeting, weapons from WeaponDef, damage and armor, death
-- [ ] HQ destroyed means defeat. Win/lose screen, back to menu.
-- [ ] AI v1: builds, trains and attacks with the same Commands as the player (`ai/`)
+- [ ] Base vehicle destroyed means defeat. Win/lose screen, back to menu.
+- [ ] AI v1: gathers, trains, upgrades and attacks with the same Commands as the player (`ai/`)
 
 ## M7: The hook: vehicles
 - [ ] Fuel: vehicles consume oil while moving, refuelling (rules TBD, question 5)

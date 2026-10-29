@@ -6,26 +6,32 @@ still change. **Open questions** wait on a decision and shouldn't be guessed at 
 ## Pitch
 
 A top-down 2D RTS on a ruined, post-apocalyptic Earth, Mad Max style. Two asymmetric factions
-fight over oil, metal and people in small desert maps. Golden-era RTS mechanics (StarCraft,
-Red Alert 2), at a **slower, simpler pace**. The hook: **vehicles** are expensive, run on oil, and
-can be heavily modified and upgraded.
+fight over oil, metal and people in small desert maps. **There are no buildings:** each side's
+base is one huge **base vehicle** that produces every other unit and does all the upgrades.
+Golden-era RTS mechanics (StarCraft, Red Alert 2), at a **slower, simpler pace**. The hook:
+**vehicles** are expensive, run on oil, and can be heavily modified and upgraded.
 
 ## Decided
 
-- **Genre:** classic base-building RTS: gather, build, train, fight. Top-down 2D.
+- **Genre:** classic RTS (gather, produce, upgrade, fight), but with a **mobile base instead
+  of buildings**. Top-down 2D.
 - **Pace:** slower and simpler than the classics. Fewer units, fewer clicks, more decisions.
 - **Setting:** post-apocalyptic Earth, desert wasteland, Mad Max vibes.
 - **Mode:** skirmish, **1v1 vs AI**. **Multiplayer later** (much later sprint), via
   deterministic lockstep (see `decisions/0005-deterministic-lockstep.md`).
 - **Factions:** 2, asymmetric. **The current scope builds one faction first.** The AI uses the
   same faction until the second one exists.
-- **Win condition:** each player starts with their own **HQ**. Destroy the enemy HQ to win; lose
-  yours and you lose.
-- **Buildings:** each faction has buildable buildings, and buildings produce units.
+- **Start:** each player starts with **exactly one vehicle, their base vehicle**: a big, slow
+  vehicle that acts as the whole base.
+- **No buildings.** Nothing is constructed. The base vehicle replaces HQ, factories and
+  research buildings.
+- **Base vehicle:** **produces all other units** and performs **all upgrades** (including
+  vehicle modifications). Both factions have one, and they differ (asymmetric).
+- **Win condition:** **destroy the enemy base vehicle.** If yours dies, you lose.
 - **Resources (3):**
   - **Workforce:** used for everything.
   - **Oil:** used for vehicles, and as their **fuel** (vehicles burn oil to move).
-  - **Metal:** for advanced units and buildings, mid to late game.
+  - **Metal:** for advanced units and upgrades, mid to late game.
 - **Maps:** small, simple desert maps with sparse resources and a few obstacles.
 - **Engine:** Godot 4.6, GDScript, top-down 2D (see `decisions/0001-godot-gdscript.md`).
 - **Art:** placeholder shapes drawn in code until real art exists. Logic never depends on art.
@@ -54,34 +60,48 @@ Main menu ── Play ──► Create match (choose map + faction) ── Start
 - Vehicles can be **heavily modified and upgraded** (armor plating, weapons, engines,
   fuel tanks...): the main source of depth and variety.
 
+### The base vehicle
+- The heart of each side: production, upgrades, and the loss condition all in one unit, so
+  **protecting and positioning it is the core strategic tension**. Moving it toward resources
+  or the front is powerful but risky.
+- It's big and slow, and as a vehicle it presumably burns oil to move (see question 5),
+  so relocating the base is a real decision.
+
 ### Factions (asymmetric, identities TBD)
-Two factions that play differently in the same economy. See open question 1.
+Two factions that play differently in the same economy, each around its own base vehicle. See
+open question 1.
 
 ### Economy
-Sparse resources mean expansion and map control matter. Losing oil supply should hurt
-vehicles directly (fuel).
+Sparse resources mean map control matters. Without buildings, "expansion" means sending
+units (or the base vehicle itself) to resource sites. Losing oil supply hurts vehicles directly
+(fuel).
 
 ## Open questions
 
-1. **Faction identities.** You said the two factions stay "the same as before". The space design
-   had *a fleet centred on a huge mothership* vs. *slowly expanding aliens*. A wasteland version
-   could be a **mobile war-rig/convoy faction** (base on wheels, vehicle-heavy) vs. a
-   **settler/cult faction that spreads territory** (cheap, numerous, holds ground). Is that the
-   idea, or something else? Names?
+1. **Faction identities.** Both now centre on a base vehicle, so how do they differ? (E.g. one
+   huge armored war-rig that is slow but tough, vs. a lighter base vehicle with a faction that
+   relies on many cheap units, or one that can "deploy" in place?) Names, for the factions and
+   for each base vehicle?
 2. **Which faction is built first?**
-3. **Workforce:** where does it come from? (Housing that generates it over time? A population
-   cap? Recruited at a building?) Is it spent and gone, or "occupied" while a unit lives (like
-   supply)?
-4. **Gathering:** how are oil and metal collected? (Oil wells/derricks on oil fields, scrap
-   piles for metal? Harvester vehicles or workers?) Do nodes run out?
-5. **Fuel rules:** what happens at 0 fuel (vehicle stops, slows, can't attack)? How do vehicles
-   refuel (at buildings, tanker units, automatically)?
-6. **Vehicle modification:** done where and when (workshop building, in-match, pre-game)? Slot-
-   based (weapon, armor, engine)? Does it cost metal?
+3. **Workforce:** where does it come from without housing buildings? (Generated by the base
+   vehicle over time? Rescued/recruited from map sites? A population cap the base vehicle
+   provides and upgrades raise?) Is it spent, or "occupied" while a unit lives (like supply)?
+4. **Gathering without buildings:** how are oil and metal collected? (Harvester vehicles
+   bringing loads back to the base vehicle? Units that "deploy" on an oil field as a mobile
+   pump? Scrap piles salvaged by workers?) Do sites run out?
+5. **Fuel rules:** what happens at 0 fuel (stops, slows, can't attack)? How do vehicles refuel
+   (at the base vehicle, tanker units, automatically nearby)? Does the base vehicle use fuel too?
+6. **Vehicle modification:** all upgrades happen at the base vehicle. Must a unit drive back to
+   it to be modified, or are upgrades global (apply to all units of a type)? Slot-based (weapon,
+   armor, engine)? Cost metal?
 7. **Infantry:** are there non-vehicle units (cheap, workforce-only, no fuel)?
-8. **Unit and building roster** for the first faction (roughly 4–6 of each to start?).
-9. **Tech progression:** tiers gated by buildings, or by metal?
-10. **AI difficulty levels** for the 1v1 opponent?
-11. **Settings contents:** which audio sliders (master/music/effects), video options (window
-    mode, resolution, vsync), and is input = key rebinding?
-12. **Match length target?** (Slower pace suggests 20–30 minutes.)
+8. **Unit roster** for the first faction (roughly 4–6 units to start?).
+9. **Tech progression:** tiers bought as base vehicle upgrades, gated by metal?
+10. **Base vehicle details:** can it attack or defend itself? Can it move and produce at the
+   same time, or must it stop/deploy to produce? Can it be repaired? Is there only ever one?
+11. **Any static structures at all?** (Even with no buildings: neutral oil wells, turrets,
+   walls, or nothing?)
+12. **AI difficulty levels** for the 1v1 opponent?
+13. **Settings contents:** which audio sliders (master/music/effects), video options (window
+   mode, resolution, vsync), and is input = key rebinding?
+14. **Match length target?** (Slower pace suggests 20–30 minutes.)
