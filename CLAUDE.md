@@ -6,9 +6,10 @@ Skirmish, **1v1 vs AI** for now. **Multiplayer comes in a much later sprint via 
 lockstep**, so the simulation is deterministic from day one (`docs/decisions/0005-deterministic-lockstep.md`).
 
 Design pillars (details, game flow and open questions in `docs/design.md`):
-- **Three resources:** workforce (used by everything), fuel (vehicles: cost and what they burn to move), metal
+- **Three resources:** workforce (used by everything), fuel (spent to produce vehicles), metal
   (advanced units and upgrades, mid to late game).
-- **The hook:** vehicles are expensive, burn fuel to move, and can be heavily modified.
+- **The hook:** vehicles are expensive and can be heavily modified. (Fuel consumption while
+  moving is parked: fuel is only a production cost.)
 - **No buildings.** Each player starts with exactly **one base vehicle**, which produces all other
   units and does all upgrades. Destroying the enemy base vehicle wins, and losing yours loses.
 - **Two asymmetric factions**, but **one faction is built first**.

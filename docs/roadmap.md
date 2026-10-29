@@ -54,8 +54,6 @@ See `decisions/0005-deterministic-lockstep.md`. Rebuilds M1's movement on the si
 - [ ] AI v1: gathers, trains, upgrades and attacks with the same Commands as the player (`ai/`)
 
 ## M7: The hook: vehicles
-- [ ] Fuel: vehicles burn fuel while moving, crawl then stop when empty (can still shoot),
-      tanker vehicles refuel them
 - [ ] Vehicle modification and upgrades (question 6)
 
 ## M8: Second faction
