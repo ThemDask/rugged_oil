@@ -21,6 +21,9 @@ Golden-era RTS mechanics (StarCraft, Red Alert 2), at a **slower, simpler pace**
   deterministic lockstep (see `decisions/0005-deterministic-lockstep.md`).
 - **Factions:** 2, asymmetric. **The current scope builds one faction first.** The AI uses the
   same faction until the second one exists.
+  - **Raiders:** **fast but vulnerable.** They salvage resources on the spot.
+  - **Second faction (name TBD):** **sturdier but slower.** They haul resources back to their
+    base vehicle.
 - **Start:** each player starts with **exactly one vehicle, their base vehicle**: a big, slow
   vehicle that acts as the whole base.
 - **No buildings.** Nothing is constructed. The base vehicle replaces HQ, factories and
@@ -36,14 +39,17 @@ Golden-era RTS mechanics (StarCraft, Red Alert 2), at a **slower, simpler pace**
   Maps contain only terrain, obstacles, resource sites and control points.
 - **Win condition:** **destroy the enemy base vehicle.** If yours dies, you lose.
 - **Resources (3):**
-  - **Workforce:** used for everything. Comes from **controlling points on the map**, like the
-    strategic points/flags in Company of Heroes and Dawn of War.
+  - **Workforce:** used for everything. Comes from **controlling points (flags) on the map**,
+    like the strategic points in Company of Heroes and Dawn of War. **Infinite:** a held point
+    keeps producing.
   - **Oil:** used for vehicles, and as their **fuel** (vehicles burn oil to move).
   - **Metal:** for advanced units and upgrades, mid to late game.
-- **Gathering differs per faction:**
-  - **One faction hauls:** gatherers collect at a resource site and **return loads to the base
+  - **Oil and metal are found on the map and are finite:** sites run out.
+- **Gathering:** each faction has **one gatherer vehicle type** (a single unit, not separate
+  hauler and salvager units). Its behaviour depends on the faction:
+  - **Second faction:** the gatherer collects at a site and **brings loads back to the base
     vehicle**.
-  - **The other faction salvages on the spot:** no trip back, but **slower** gathering.
+  - **Raiders:** the gatherer **salvages on the spot**: no trip back, but **slower**.
 - **Tech:** progression is **tiers bought as upgrades on the base vehicle**.
 - **Modifications apply on the spot:** a unit doesn't need to return to the base vehicle to
   be upgraded or modified.
@@ -101,10 +107,8 @@ units (or the base vehicle itself) to resource sites. Losing oil supply hurts ve
 ## Open questions
 
 ### Factions
-1. **Faction identities.** Both centre on a base vehicle. One hauls and one salvages, so what
-   else differs? (E.g. a heavy, armored war-rig faction vs. a scrappy, numerous salvager
-   faction?) Names, for the factions and each base vehicle?
-2. **Which faction is built first:** the hauler or the salvager?
+1. **Second faction:** name and theme (sturdy, slow, hauls). Base vehicle names for both?
+2. **Which faction is built first:** Raiders or the second faction?
 
 ### Economy
 3. **Control points:** how are they captured (a unit stands nearby for N seconds? some units
@@ -112,10 +116,9 @@ units (or the base vehicle itself) to resource sites. Losing oil supply hurts ve
 4. **Workforce from points:** is it **income** that accumulates and is spent (CoH-style
    requisition), or a **cap** that units occupy while alive? Or both: points raise the cap and
    produce income?
-5. **Who gathers?** Dedicated gatherer units (e.g. a harvester truck / salvage crew), or can any
-   unit gather?
-6. **Resource sites:** separate oil sites and metal (scrap) sites? Do they deplete? Does the
-   salvaging faction work the same sites as the haulers?
+5. ~~Who gathers?~~ Decided: one dedicated gatherer vehicle per faction.
+6. **Resource sites:** separate oil sites and metal (scrap) sites, or mixed? Do both factions
+   use the same sites? How much does one site hold?
 7. **Oil vs. fuel:** is fuel drawn from the shared oil stockpile, or is a vehicle's fuel tank
    separate (oil is spent once to fill it)?
 
