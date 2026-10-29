@@ -18,7 +18,7 @@ display_name = "Buggy"
 description = "Placeholder light vehicle."
 tags = Array[StringName]([&"vehicle", &"light"])
 cost = Dictionary[StringName, int]({
-&"oil": 100,
+&"fuel": 100,
 &"workforce": 2
 })
 build_time = 15.0

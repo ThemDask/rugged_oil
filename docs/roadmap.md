@@ -38,9 +38,9 @@ See `decisions/0005-deterministic-lockstep.md`. Rebuilds M1's movement on the si
 - [ ] Base vehicle in the simulation: big, slow, selectable, health (details: design.md Q10)
 - [ ] Losing your base vehicle = defeat (detection in place, win/lose screen in M6)
 
-## M4: Economy (oil, workforce, metal)
+## M4: Economy (fuel, workforce, metal)
 - [ ] Per-player resource stock in the simulation, starting resources from GameRules
-- [ ] Resource sites on maps (oil, metal) and gathering without buildings (rules TBD, Q3–4)
+- [ ] Resource sites on maps (fuel, metal) and gathering without buildings (rules TBD, Q3–4)
 - [ ] HUD resource bar
 
 ## M5: Production and upgrades
@@ -54,7 +54,8 @@ See `decisions/0005-deterministic-lockstep.md`. Rebuilds M1's movement on the si
 - [ ] AI v1: gathers, trains, upgrades and attacks with the same Commands as the player (`ai/`)
 
 ## M7: The hook: vehicles
-- [ ] Fuel: vehicles consume oil while moving, refuelling (rules TBD, question 5)
+- [ ] Fuel: vehicles burn fuel while moving, crawl then stop when empty (can still shoot),
+      tanker vehicles refuel them
 - [ ] Vehicle modification and upgrades (question 6)
 
 ## M8: Second faction

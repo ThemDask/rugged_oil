@@ -8,7 +8,7 @@ classes that define their shape are in `game/core/defs/`. See
 
 ```
 content/
-  rules.tres                    GameRules: resource types (oil, workforce, metal), starting
+  rules.tres                    GameRules: resource types (fuel, workforce, metal), starting
                                 resources, supply cap
   factions/
     faction_a/

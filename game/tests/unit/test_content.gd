@@ -16,7 +16,7 @@ func test_there_is_a_faction() -> void:
 
 
 func test_rules_have_the_three_resources() -> void:
-	for res_type: StringName in [&"workforce", &"oil", &"metal"]:
+	for res_type: StringName in [&"workforce", &"fuel", &"metal"]:
 		assert_true(res_type in GameData.rules.resource_types, String(res_type))
 
 
