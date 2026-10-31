@@ -19,8 +19,9 @@ export type TargetingOrder = 'move' | 'attackMove';
 /**
  * Mouse and keyboard control for the human player (HLD "Controls"):
  * - left-click selects a unit, left-drag selects with a box, Shift adds to the selection;
- * - right-click gives the default order: capture on a requisition point, gather on a reserve
- *   (extractors only; the others move there), otherwise move. Shift + right-click queues it;
+ * - right-click gives the default order: attack on a visible enemy unit, capture on a
+ *   requisition point, gather on a reserve (extractors only; the others move there), otherwise
+ *   move. Shift + right-click queues it;
  * - after the Move or Attack-move button, the next left-click picks the target (right-click or
  *   Esc cancels);
  * - Ctrl + 1-9 assigns a control group, 1-9 selects it, pressing it twice centres the camera.
@@ -124,12 +125,19 @@ export class Selection {
         this.bridge.issue({ type, playerId: this.playerId, unitIds: this.selected.map((v) => v.id), target: pxToSim(worldX, worldY), queue });
     }
 
-    /** Right-click: capture a point, gather from a reserve, or move. */
+    /** Right-click: attack an enemy, capture a point, gather from a reserve, or move. */
     private defaultOrder(worldX: number, worldY: number, queue: boolean): void {
         if (this.selected.length === 0) return;
         const at = pxToSim(worldX, worldY);
         const playerId = this.playerId;
         const unitIds = this.selected.map((v) => v.id);
+        const enemy = [...this.views.values()].find(
+            (v) => v.playerId !== playerId && v.visible && Phaser.Math.Distance.Between(v.x, v.y, worldX, worldY) <= v.radius + 2,
+        );
+        if (enemy) {
+            this.bridge.issue({ type: 'attack', playerId, unitIds, targetId: enemy.id, queue });
+            return;
+        }
         for (const point of this.world.reqPoints.values()) {
             if (insideCaptureArea(this.world, point, at)) {
                 this.bridge.issue({ type: 'capture', playerId, unitIds, pointId: point.id, queue });

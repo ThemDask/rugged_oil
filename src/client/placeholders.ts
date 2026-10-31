@@ -59,6 +59,10 @@ export function createPlaceholders(scene: Phaser.Scene, data: GameData): void {
     const reservePx = simLengthToPx(metres(data.rules.reserveSize)) * ART_SCALE;
     make('reserve_oil', reservePx, reservePx, (w, h) => drawReserve(g, w, h, 0x1a1a1a, 0x3a3a3a));
     make('reserve_metal', reservePx, reservePx, (w, h) => drawReserve(g, w, h, 0x8a929a, 0xb8c0c8));
+    make('projectile', 16, 6, (w, h) => {
+        g.fillStyle(0xffe08a).fillRect(0, 0, w, h);
+        g.fillStyle(0xffffff).fillRect(w * 0.6, h * 0.2, w * 0.4, h * 0.6);
+    });
     make('requisition_point', 48, 48, (w, h) => {
         g.lineStyle(3, 0xffffff).lineBetween(w * 0.3, h * 0.1, w * 0.3, h * 0.9);
         g.fillStyle(0xffffff).fillTriangle(w * 0.3, h * 0.1, w * 0.85, h * 0.25, w * 0.3, h * 0.42);

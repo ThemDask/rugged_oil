@@ -51,6 +51,26 @@ describe('determinism', () => {
         expect(a).toEqual(b);
     });
 
+    it('a battle between both factions plays out identically twice', () => {
+        const battle = (): number[] => {
+            const world = createWorld(config, data);
+            const at = (x: number, y: number) => cellCenter({ x, y });
+            for (const [i, id] of data.faction('league')!.units.entries()) world.spawnUnit(id, 0, at(100, 120 + i * 3));
+            for (const [i, id] of data.faction('raiders')!.units.entries()) world.spawnUnit(id, 1, at(118, 120 + i * 3), 2048);
+            const ids = (p: number) => [...world.units.values()].filter((u) => u.playerId === p && !u.isHq).map((u) => u.id);
+            world.schedule({ type: 'attackMove', playerId: 0, unitIds: ids(0), target: at(125, 126) });
+            world.schedule({ type: 'attackMove', playerId: 1, unitIds: ids(1), target: at(95, 126) });
+            const sums: number[] = [];
+            for (let i = 0; i < 900; i++) {
+                world.step();
+                sums.push(world.checksum());
+            }
+            expect([...world.units.values()].some((u) => u.health < u.stats.health) || world.units.size < 12).toBe(true);
+            return sums;
+        };
+        expect(battle()).toEqual(battle());
+    });
+
     it('the scripted economy happens: recruits spawn and the Lifeline gathers', () => {
         const world = createWorld(config, data);
         for (const command of script) world.schedule(structuredClone(command));

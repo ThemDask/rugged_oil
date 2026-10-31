@@ -17,8 +17,8 @@ const REDRAW_MS = 200;
 /**
  * HLD HUD (5): the minimap. Obstacles, reserves (with their resource symbol) and requisition
  * points (blue; your own lighter blue), friendly units as blue dots and enemies as red dots,
- * HQs bigger, and the camera's view as a rectangle. No fog on the minimap itself; once fog of
- * war exists (M5) it shows only enemies currently visible. Clicking moves the camera.
+ * HQs bigger, and the camera's view as a rectangle. No fog is drawn on the minimap, but it only
+ * shows enemies currently visible. Clicking moves the camera.
  */
 export class Minimap {
     private readonly dynamic: Phaser.GameObjects.Graphics;
@@ -52,6 +52,7 @@ export class Minimap {
             g.fillStyle(point.owner === this.playerId ? OWN_POINT : POINT).fillRect(at.x - 3, at.y - 3, 6, 6);
         }
         for (const unit of this.world.units.values()) {
+            if (unit.playerId !== this.playerId && !this.world.isVisibleTo(this.playerId, unit.position)) continue;
             const at = this.toMap(unit.position);
             const size = unit.isHq ? 6 : 3;
             g.fillStyle(unit.playerId === this.playerId ? FRIENDLY : ENEMY).fillRect(at.x - size / 2, at.y - size / 2, size, size);

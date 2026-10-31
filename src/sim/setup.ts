@@ -31,7 +31,7 @@ export function createWorld(config: MatchConfig, data: GameData): SimWorld {
     config.players.forEach((slot, playerId) => {
         const faction = data.faction(slot.faction);
         if (!faction) throw new Error(`Unknown faction '${slot.faction}'`);
-        world.addPlayer(playerId, faction.id, slot.incomeBonusPercent);
+        world.addPlayer(playerId, faction.id, slot.incomeBonusPercent, slot.team);
         const spawn = cellCenter(map.spawns[playerId]);
         world.spawnUnit(faction.hq, playerId, spawn, atan2Steps(center.y - spawn.y, center.x - spawn.x));
     });

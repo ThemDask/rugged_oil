@@ -1,10 +1,10 @@
 import { unitStats, type UnitStats } from '../data/convert';
 import type { GameData } from '../data/registry';
 import { stepCapture } from './capture';
-import { compareCommands, isValidCommand, type AttackMoveCommand, type CaptureCommand, type Command, type GatherCommand, type HoldFireCommand, type MoveCommand, type StopCommand } from './commands';
+import { compareCommands, isValidCommand, type AttackCommand, type AttackMoveCommand, type CaptureCommand, type Command, type GatherCommand, type HoldFireCommand, type MoveCommand, type StopCommand } from './commands';
 import { stepEconomy } from './economy';
 import { formationBlock, spacingFor } from './formation';
-import type { SimGrid } from './grid';
+import { cellOf, type SimGrid } from './grid';
 import { metres } from '../data/convert';
 import { clamp, idiv, type Vec } from './math';
 import { stepMovement } from './movement';
@@ -12,8 +12,10 @@ import { giveOrder, stepOrders } from './orders';
 import { cancelRecruit, recruit, stepProduction } from './production';
 import { SimRng } from './rng';
 import type { PlayerState, SimProjectile, SimReqPoint, SimReserve } from './state';
-import { stepCombat, stepProjectiles, stepVisibility } from './systems';
-import { createUnit, type SimUnit } from './unit';
+import { stepCombat } from './combat';
+import { stepProjectiles } from './projectiles';
+import { stepVisibility } from './visibility';
+import { createUnit, type SimUnit, type WeaponState } from './unit';
 
 /**
  * The deterministic simulation. Owns all game state and advances it in fixed ticks. Given the
@@ -48,11 +50,12 @@ export class SimWorld {
         this.data = data;
     }
 
-    addPlayer(id: number, faction: string, incomeBonusPercent: number): PlayerState {
+    addPlayer(id: number, faction: string, incomeBonusPercent: number, team = id): PlayerState {
         const rules = this.data.rules;
         const player: PlayerState = {
             id,
             faction,
+            team,
             resources: Object.fromEntries(rules.resources.map((r) => [r, rules.startingResources[r] ?? 0])),
             carry: Object.fromEntries(rules.resources.map((r) => [r, 0])),
             incomeBonusPercent,
@@ -98,6 +101,39 @@ export class SimWorld {
         const reserve: SimReserve = { id: this.nextId++, position: { ...at }, resource, amountLeft: amount };
         this.reserves.set(reserve.id, reserve);
         return reserve;
+    }
+
+    /** Whether two players are enemies (different teams). */
+    areEnemies(a: number, b: number): boolean {
+        return this.players.get(a)?.team !== this.players.get(b)?.team;
+    }
+
+    /** Whether a position is currently visible to a player (see visibility.ts). */
+    isVisibleTo(playerId: number, at: Vec): boolean {
+        const player = this.players.get(playerId);
+        if (!player) return false;
+        const cell = cellOf(at);
+        if (!this.grid.isInside(cell)) return false;
+        return player.visible[cell.y * this.grid.width + cell.x] === 1;
+    }
+
+    /** Fires a weapon: a projectile leaves the shooter's centre in `direction`. */
+    spawnProjectile(shooter: SimUnit, direction: number, w: WeaponState): SimProjectile {
+        const p: SimProjectile = {
+            id: this.nextId++,
+            playerId: shooter.playerId,
+            sourceId: shooter.id,
+            position: { ...shooter.position },
+            previousPosition: { ...shooter.position },
+            direction,
+            speed: w.weapon.projectileSpeed,
+            distanceLeft: w.weapon.maxProjectileDistance,
+            damage: w.weapon.damage,
+            piercing: w.weapon.piercing,
+            dead: false,
+        };
+        this.projectiles.set(p.id, p);
+        return p;
     }
 
     /** The living HQ of a player, if any. */
@@ -148,6 +184,7 @@ export class SimWorld {
         }
         for (const u of this.units.values()) {
             for (const v of [u.id, u.playerId, u.position.x, u.position.y, u.heading, u.speedFx, u.health, u.orders.length, u.extractCarry]) h = mix(h, v);
+            for (const w of u.weapons) h = mix(mix(h, w.mountAngle), w.cooldown);
             for (const r of Object.keys(u.load).sort()) h = mix(h, u.load[r]);
         }
         for (const p of this.projectiles.values()) {
@@ -176,6 +213,9 @@ export class SimWorld {
                 case 'holdFire':
                     this.executeHoldFire(command);
                     break;
+                case 'attack':
+                    this.executeAttack(command);
+                    break;
                 case 'capture':
                     this.executeCapture(command);
                     break;
@@ -188,8 +228,7 @@ export class SimWorld {
                 case 'cancelRecruit':
                     cancelRecruit(this, command);
                     break;
-                // attack, research and applyUpgrade are accepted but have no effect until M5
-                // and M6 implement them.
+                // research and applyUpgrade are accepted but have no effect until M6.
             }
         }
     }
@@ -209,6 +248,16 @@ export class SimWorld {
         const largest = Math.max(...group.map((u) => u.stats.radius));
         const targets = formationBlock(command.target, group.length, spacingFor(largest));
         group.forEach((unit, i) => giveOrder(this, unit, { type: command.type, target: targets[i] }, command.queue === true));
+    }
+
+    /** Attack a visible enemy unit; only armed units take the order. */
+    private executeAttack(command: AttackCommand): void {
+        const target = this.units.get(command.targetId);
+        if (!target || target.dead || !this.areEnemies(command.playerId, target.playerId)) return;
+        if (!this.isVisibleTo(command.playerId, target.position)) return;
+        for (const unit of this.ownUnits(command)) {
+            if (unit.weapons.length > 0) giveOrder(this, unit, { type: 'attack', targetId: target.id }, command.queue === true);
+        }
     }
 
     /** Capture: the group spreads out inside the point's square. */

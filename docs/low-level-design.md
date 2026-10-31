@@ -253,9 +253,9 @@ otherwise, unless hold fire is on, pick the **closest visible enemy** in range w
 of fire. A plain loop over enemy units is fine at this scale (about 200 units); a bucket grid can
 be added if profiling ever asks for it.
 
-**"Attacked by"**: when a projectile hits a unit, the unit remembers the attacker for a short
-time. Idle units use that to turn toward the closest visible attacker. If the attacker is in the
-fog, there's no reaction.
+**"Attacked by"**: when a projectile hits a unit, the unit remembers the attacker (its last 4
+attackers, for 5 seconds). Idle units use that to turn their hull toward the closest visible
+attacker. If the attacker is in the fog, there's no reaction.
 
 ---
 
@@ -265,15 +265,16 @@ fog, there's no reaction.
 drawn by the client.
 
 - Each player has a **visibility grid** (one flag per tile).
-- Every **5 ticks** (4 times a second) it is rebuilt: for each of the player's units, mark the
-  tiles within its spotting range that are in **line of sight**, with obstacles blocking (a
-  shadowcasting pass per unit).
+- Every **5 ticks** (4 times a second) it is rebuilt (`sim/visibility.ts`): from each of the
+  player's units, rays go to every tile on the edge of its spotting circle and mark the tiles
+  they cross, stopping at the first obstacle (which is itself marked, so walls are seen).
 - An enemy unit is visible if its tile is visible to the player.
 - The client draws a thin grey layer over non-visible tiles and hides enemy units there. The
   minimap shows only visible enemies.
 
-Cost: about 100 units × a 30-tile radius is a few hundred thousand cheap tile checks every 5
-ticks, which is fine.
+Cost: about 100 units × ~120 rays × up to 30 tiles is a few hundred thousand cheap tile checks
+every 5 ticks, which is fine. The client turns the grid into a one-pixel-per-tile texture,
+stretched and smoothed over the map (`views/FogView.ts`).
 
 ---
 
@@ -285,17 +286,20 @@ the weapon's cooldown.
 
 - A mount turns toward its target at its rotation speed, but only within its **arc**, centred on
   the hull's front (360° for turrets).
-- A weapon fires when its cooldown is ready, the target is in range, and the mount points at the
-  aim point.
+- **Targets** (`sim/combat.ts`), per weapon and tick: the unit's attack-order target if this
+  weapon can reach it (in range, in its arc, clear shot); otherwise, unless holding fire, the
+  closest visible enemy in range, in the arc, with a clear shot (obstacles block shots).
+- A weapon fires when its cooldown is ready and the mount points within about 3° of the aim
+  point. Without a target, the mount turns back to the front.
 - **Leading the shot:** the aim point is where the target will be when the projectile arrives,
   based on its current position, heading and speed. If the target changes course, the shot can
   miss.
 
 **Projectiles** are sim entities:
 - Each tick a projectile moves `speed` sim units along its direction (100 m/s = 500 units/tick).
-- **Hit test:** the segment it travelled this tick is checked against every enemy unit's circle
-  and against obstacle tiles. The first thing hit stops it. Friendly units are ignored (no
-  friendly fire).
+- **Hit test** (`sim/projectiles.ts`): every metre along the path flown this tick, the point is
+  checked against obstacle tiles and against every enemy unit's real rotated rectangle (lowest
+  id first). The first thing hit stops it. Friendly units are ignored (no friendly fire).
 - It's removed after its **maximum projectile distance**.
 - There is no splash: one projectile damages at most one unit.
 
@@ -440,6 +444,9 @@ content/
 - **Minimap:** a second camera on the Match scene with a very low zoom, drawn into the HUD's
   corner, or a small Graphics redrawn a few times per second from sim state (obstacles, reserves,
   points, own units, visible enemies). Clicking it moves the camera.
+- **Development builds only:** F2 spawns one of each of your faction's units in front of your HQ,
+  F3 the enemy's units 300 m ahead, and `game` is reachable from the browser console. F2 and F3
+  change the sim directly instead of through Commands, so they're excluded from production.
 - **Esc** opens the escape menu and pauses single-player; Esc again closes it.
 - **Match end:** when `world.winner` is set, the Match scene shows the victory or defeat screen;
   Exit goes back to the main menu.
@@ -484,9 +491,7 @@ Boot ──► MainMenu ──► MatchSetup ──► Match (+ HudScene)
 Suggested sim files as the game grows: `world.ts`, `commands.ts`, `grid.ts`, `movement.ts`,
 `formation.ts`, `orders.ts`, `visibility.ts`, `combat.ts`, `projectiles.ts`, `economy.ts`,
 `capture.ts`, `production.ts`, `upgrades.ts`, `math.ts`, `rng.ts`. Each is a set of functions
-over `SimWorld`, called by `step()` in the order of section 4. Until a system is implemented,
-its empty step function lives in `sim/systems.ts`; it moves to its own file when its milestone
-builds it.
+over `SimWorld`, called by `step()` in the order of section 4.
 
 ---
 

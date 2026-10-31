@@ -1,6 +1,8 @@
-import { deliverLoad, insideReserve, isFull, loadTotal } from './economy';
 import { insideCaptureArea } from './capture';
-import { length, vsub } from './math';
+import { canSee, clearShot, enemyInRange } from './combat';
+import { deliverLoad, insideReserve, isFull, loadTotal } from './economy';
+import { angleDiff, atan2Steps, length, vsub } from './math';
+import { turnToward } from './movement';
 import { planPath } from './pathing';
 import type { Order, SimUnit } from './unit';
 import type { SimWorld } from './world';
@@ -8,7 +10,10 @@ import type { SimWorld } from './world';
 /**
  * Per-unit orders. The front of `unit.orders` is the current order; Shift-queued orders wait
  * behind it. Units never act on their own: an order ends when it's done and the unit stays put.
- * - move / attack-move: drive to the target (attack-move's fighting arrives with combat in M5);
+ * - move: drive to the target;
+ * - attack-move: drive to the target, stopping to fight while a visible enemy is in range;
+ * - attack: drive until the target is in range, then stay and fire; ends when the target dies or
+ *   can't be seen any more;
  * - capture: drive into the point's square and stay until the point is ours;
  * - gather: drive to the reserve and extract. Hauling (League) extractors carry each full load
  *   to the HQ and come back. When the reserve is empty the extractor stops where it is (a
@@ -47,10 +52,21 @@ function orderDone(world: SimWorld, unit: SimUnit): boolean {
     if (!order) return false;
     switch (order.type) {
         case 'move':
+            return unit.waypoints.length === 0 && unit.speedFx === 0;
         case 'attackMove':
+            if (enemyInRange(world, unit)) {
+                unit.waypoints = [];
+                order.holding = true;
+                return false;
+            }
+            if (order.holding) {
+                order.holding = false;
+                planPath(world.grid, unit, order.target);
+                return false;
+            }
             return unit.waypoints.length === 0 && unit.speedFx === 0;
         case 'attack':
-            return true; // M5.
+            return stepAttack(world, unit, order.targetId);
         case 'capture': {
             const point = world.reqPoints.get(order.pointId);
             if (!point) return true;
@@ -63,6 +79,24 @@ function orderDone(world: SimWorld, unit: SimUnit): boolean {
         case 'gather':
             return stepGather(world, unit, order);
     }
+}
+
+/** Attack order: close in until a weapon is in range with a clear shot, then hold and face the target if no mount can reach it. */
+function stepAttack(world: SimWorld, unit: SimUnit, targetId: number): boolean {
+    const target = world.units.get(targetId);
+    if (!target || target.dead || !canSee(world, unit, target)) return true;
+    const distance = length(vsub(target.position, unit.position));
+    const inRange = unit.weapons.some((w) => distance <= w.weapon.range) && clearShot(world, unit.position, target.position);
+    const to = vsub(target.position, unit.position);
+    if (inRange) {
+        unit.waypoints = [];
+        const angle = atan2Steps(to.y, to.x);
+        const reachable = unit.weapons.some((w) => Math.abs(angleDiff(unit.heading, angle)) <= w.mount.halfArc);
+        if (!reachable && unit.speedFx === 0) turnToward(unit, angle);
+    } else if ((unit.waypoints.length === 0 && unit.speedFx === 0) || world.tick % REPLAN_TICKS === unit.id % REPLAN_TICKS) {
+        planPath(world.grid, unit, target.position);
+    }
+    return false;
 }
 
 function stepGather(world: SimWorld, unit: SimUnit, order: Extract<Order, { type: 'gather' }>): boolean {

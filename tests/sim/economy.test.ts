@@ -100,8 +100,11 @@ describe('requisition capture', () => {
     it('pauses while both sides have equal weight', () => {
         const w = world();
         const point = w.addReqPoint(cellCenter({ x: 20, y: 20 }));
-        capturer(w, 't_tank', 0, { x: 19, y: 20 }, point.id);
-        capturer(w, 't_tank', 1, { x: 21, y: 20 }, point.id);
+        const a = capturer(w, 't_tank', 0, { x: 19, y: 20 }, point.id);
+        const b = capturer(w, 't_tank', 1, { x: 21, y: 20 }, point.id);
+        // Hold fire, so the two tanks don't destroy each other during the test.
+        w.schedule({ type: 'holdFire', playerId: 0, unitIds: [a.id], holdFire: true });
+        w.schedule({ type: 'holdFire', playerId: 1, unitIds: [b.id], holdFire: true });
         run(w, 40 * SECOND);
         expect(point.owner).toBe(-1);
         expect(point.progress).toBe(0);
@@ -110,8 +113,10 @@ describe('requisition capture', () => {
     it('lets the heavier side capture at the speed of the difference', () => {
         const w = world();
         const point = w.addReqPoint(cellCenter({ x: 20, y: 20 }));
-        capturer(w, 't_heavy', 0, { x: 19, y: 20 }, point.id); // 5
-        capturer(w, 't_tank', 1, { x: 21, y: 20 }, point.id); // 2 → difference 3: ×11/9 ≈ 24.5 s
+        const a = capturer(w, 't_heavy', 0, { x: 19, y: 20 }, point.id); // 5
+        const b = capturer(w, 't_tank', 1, { x: 21, y: 20 }, point.id); // 2 → difference 3: ×11/9 ≈ 24.5 s
+        w.schedule({ type: 'holdFire', playerId: 0, unitIds: [a.id], holdFire: true });
+        w.schedule({ type: 'holdFire', playerId: 1, unitIds: [b.id], holdFire: true });
         run(w, 24 * SECOND);
         expect(point.owner).toBe(-1);
         run(w, 1 * SECOND + 2);

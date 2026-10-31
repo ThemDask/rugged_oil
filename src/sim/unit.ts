@@ -6,7 +6,7 @@ import { wrapAngle, type Vec } from './math';
 export type Order =
     | { type: 'move'; target: Vec }
     | { type: 'attack'; targetId: number }
-    | { type: 'attackMove'; target: Vec }
+    | { type: 'attackMove'; target: Vec; holding?: boolean }
     | { type: 'capture'; pointId: number; target: Vec }
     | { type: 'gather'; reserveId: number; phase: GatherPhase };
 
@@ -21,6 +21,8 @@ export interface WeaponState {
     mountAngle: number;
     /** Ticks until it can fire again. */
     cooldown: number;
+    /** Fraction of an angle step carried over between ticks (×ONE), like SimUnit.turnCarry. */
+    turnCarry: number;
 }
 
 /**
@@ -48,6 +50,8 @@ export interface SimUnit {
     weapons: WeaponState[];
     /** Per-unit upgrades applied to this unit. */
     upgrades: string[];
+    /** Recent attackers (unit id and tick of the last hit), newest last; for idle units turning to face them. */
+    attackedBy: { id: number; tick: number }[];
     /** League extractors: resources carried. */
     load: Resources;
     /** Extraction progress toward the next whole unit of resource, in 1/TICKS_PER_MINUTE units. */
@@ -80,8 +84,9 @@ export function createUnit(id: number, playerId: number, defId: string, isHq: bo
         waypoints: [],
         orders: [],
         holdFire: false,
-        weapons: stats.weapons.map((w) => ({ weapon: w.weapon, mount: w.mount, mountAngle: 0, cooldown: 0 })),
+        weapons: stats.weapons.map((w) => ({ weapon: w.weapon, mount: w.mount, mountAngle: 0, cooldown: 0, turnCarry: 0 })),
         upgrades: [],
+        attackedBy: [],
         load: {},
         extractCarry: 0,
         dead: false,

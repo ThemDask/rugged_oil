@@ -71,6 +71,15 @@ export class UnitView {
         if (this.unit.health !== this.drawnHealth) this.drawOverlay();
     }
 
+    /** Hides the unit while it's an enemy in the local player's fog. */
+    setVisibleInFog(visible: boolean): void {
+        this.root.setVisible(visible);
+    }
+
+    get visible(): boolean {
+        return this.root.visible;
+    }
+
     destroy(): void {
         this.root.destroy();
     }

@@ -16,6 +16,8 @@ export interface ProductionEntry {
 export interface PlayerState {
     id: number;
     faction: string;
+    /** Players with the same team are allies; everyone else is an enemy. */
+    team: number;
     resources: Resources;
     /** Fractions of a resource not yet credited, in 1/INCOME_FRACTION units (see economy.ts). */
     carry: Resources;

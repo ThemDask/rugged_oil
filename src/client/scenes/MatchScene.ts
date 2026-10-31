@@ -12,7 +12,9 @@ import { CommandBridge } from '../systems/CommandBridge';
 import { RtsCamera } from '../systems/RtsCamera';
 import { Selection } from '../systems/Selection';
 import { MapObjectsView } from '../views/MapObjectsView';
+import { FogView } from '../views/FogView';
 import { MapView } from '../views/MapView';
+import { ProjectileViews } from '../views/ProjectileViews';
 import { OrderLinesView } from '../views/OrderLinesView';
 import { UnitView } from '../views/UnitView';
 
@@ -37,6 +39,8 @@ export class MatchScene extends Phaser.Scene {
 
     private mapObjects!: MapObjectsView;
     private orderLines!: OrderLinesView;
+    private fog!: FogView;
+    private projectiles!: ProjectileViews;
     private readonly views = new Map<number, UnitView>();
     private ais: AiController[] = [];
     private accumulator = 0;
@@ -71,7 +75,12 @@ export class MatchScene extends Phaser.Scene {
         }
         this.selection = new Selection(this, humanId, this.views, this.bridge, this.world, (x, y) => this.camera.centerOn(x, y));
         this.orderLines = new OrderLinesView(this, this.world, this.selection);
-        if (import.meta.env.DEV) this.input.keyboard!.on('keydown-F2', () => this.devSpawnArmy());
+        this.fog = new FogView(this, this.world, humanId);
+        this.projectiles = new ProjectileViews(this, this.world, humanId);
+        if (import.meta.env.DEV) {
+            this.input.keyboard!.on('keydown-F2', () => this.devSpawnArmy(this.humanId, 6000));
+            this.input.keyboard!.on('keydown-F3', () => this.devSpawnArmy(this.config.players.findIndex((_, i) => i !== this.humanId), 30000));
+        }
 
         const base = [...this.world.units.values()].find((u) => u.playerId === humanId && u.isHq);
         if (base) {
@@ -96,7 +105,13 @@ export class MatchScene extends Phaser.Scene {
         }
         const alpha = this.paused ? 1 : this.accumulator / TICK_MS;
         this.syncViews();
-        for (const view of this.views.values()) view.update(alpha);
+        for (const view of this.views.values()) {
+            view.update(alpha);
+            // Enemy units in the fog are hidden.
+            view.setVisibleInFog(view.playerId === this.humanId || this.world.isVisibleTo(this.humanId, view.unit.position));
+        }
+        this.projectiles.update(alpha);
+        this.fog.update();
         this.mapObjects.update();
         this.orderLines.update();
     }
@@ -115,15 +130,17 @@ export class MatchScene extends Phaser.Scene {
     }
 
     /**
-     * Development only (F2): spawns one of each of your faction's units in front of your HQ, so
-     * movement can be tested before recruiting exists. It bypasses Commands, so never ship it.
+     * Development only: F2 spawns one of each of your faction's units in front of your HQ; F3
+     * spawns the enemy's units 300 m in front of yours, to test combat before the AI exists. It
+     * bypasses Commands, so never ship it.
      */
-    private devSpawnArmy(): void {
+    private devSpawnArmy(playerId: number, distance: number): void {
         const hq = this.world.hqOf(this.humanId);
-        if (!hq) return;
-        const faction = gameData.faction(this.world.players.get(this.humanId)!.faction)!;
-        const front = vadd(hq.position, fromAngle(hq.heading, 6000));
-        formationBlock(front, faction.units.length, 2000).forEach((at, i) => this.world.spawnUnit(faction.units[i], this.humanId, at, hq.heading));
+        if (!hq || playerId < 0) return;
+        const faction = gameData.faction(this.world.players.get(playerId)!.faction)!;
+        const front = vadd(hq.position, fromAngle(hq.heading, distance));
+        const heading = playerId === this.humanId ? hq.heading : hq.heading + 2048;
+        formationBlock(front, faction.units.length, 2000).forEach((at, i) => this.world.spawnUnit(faction.units[i], playerId, at, heading));
     }
 
     /** Ends the match and returns to the main menu. */

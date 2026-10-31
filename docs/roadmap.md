@@ -39,12 +39,12 @@ numbers come from `high-level-design.md` (HLD); how they're built is in `low-lev
       cap, spawn in a free spot; live top bar
 - **Done when:** the economy loop (capture, extract, recruit) is playable with both factions.
 
-## M5: Combat and fog of war
-- [ ] Weapons on mounts with arcs, leading shots, projectiles as sim entities, piercing/armour
+## M5: Combat and fog of war ✅
+- [x] Weapons on mounts with arcs, leading shots, projectiles as sim entities, piercing/armour
       damage, front/side/rear facings
-- [ ] Auto-targeting, attack, attack-move, hold fire, turning rules
-- [ ] Fog of war with line of sight (sim), feeding targeting, the fog layer and the minimap
-- [ ] Death; an HQ dying ends the match with the victory/defeat screen
+- [x] Auto-targeting, attack, attack-move, hold fire, turning rules
+- [x] Fog of war with line of sight (sim), feeding targeting, the fog layer and the minimap
+- [x] Death; an HQ dying ends the match with the victory/defeat screen
 - **Done when:** a full match is playable (debug control of both sides, or a passive enemy).
 
 ## M6: Upgrades
