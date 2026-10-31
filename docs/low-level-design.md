@@ -363,7 +363,8 @@ seconds, degrees), so the HLD appendix tables copy straight into it.
 ```
 content/
   rules.json                    resources, starting manpower, base income, population cap,
-                                capture times and weights, requisition income,
+                                capture times, weights and area size (80 m),
+                                requisition income, reserve size (60 m) and amounts,
                                 size classes (length, width, population, capture weight)
   weapons/*.json                WeaponDef: damage, piercing, range, rate of fire,
                                 projectile speed, max projectile distance

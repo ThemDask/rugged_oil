@@ -40,6 +40,8 @@ export interface GameRules {
         /** Manpower per second for each held point. */
         incomePerPoint: number;
     };
+    /** Side of a reserve's square footprint on the map, metres. */
+    reserveSize: number;
     /** Amount in each reserve of a resource, e.g. { oil: 100, metal: 150 }. */
     reserveAmount: Resources;
     /** AI cheat: extra percent on all its resource income. */

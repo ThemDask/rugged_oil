@@ -47,7 +47,7 @@ export function validateContent(content: ContentSet): string[] {
     resources('Rules', 'startingResources', rules.startingResources);
     resources('Rules', 'baseIncome', rules.baseIncome);
     resources('Rules', 'reserveAmount', rules.reserveAmount);
-    positive('Rules', { populationCap: rules.populationCap, productionQueueSize: rules.productionQueueSize, ...rules.capture });
+    positive('Rules', { populationCap: rules.populationCap, productionQueueSize: rules.productionQueueSize, reserveSize: rules.reserveSize, ...rules.capture });
     for (const c of SIZE_CLASSES) {
         const s = rules.sizeClasses[c];
         if (!s) problems.push(`Rules: missing size class '${c}'.`);

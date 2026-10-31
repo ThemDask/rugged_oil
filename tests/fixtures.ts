@@ -13,7 +13,8 @@ export const rules = (): GameRules => ({
     baseIncome: { manpower: 10 },
     populationCap: 100,
     productionQueueSize: 5,
-    capture: { captureTime: 30, decayTime: 10, areaSize: 40, incomePerPoint: 10 },
+    capture: { captureTime: 30, decayTime: 10, areaSize: 80, incomePerPoint: 10 },
+    reserveSize: 60,
     reserveAmount: { oil: 100, metal: 150 },
     aiIncomeBonusPercent: 25,
     sizeClasses: {

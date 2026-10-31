@@ -59,6 +59,7 @@ There will be various maps for 1v1 battles. The maps should be fairly large for 
 Unlike requisition points, oil and metal reserves are not gathered passively and require an extractor. League extractors carry the extracted oil or metal back to their HQ. Raiders extractors gather on the spot: the resource arrives over time, with no trip back.
 
 - Reserves are finite. When a reserve runs out, players have to find another one. When all reserves of a resource are used up, there is no more of that resource.
+- Each reserve covers a square of 60 × 60 m (6 × 6 tiles) on the map.
 - Several extractors can work the same reserve at once.
 - When a reserve runs out, its extractors stay in place (no automation).
 
@@ -67,7 +68,7 @@ Unlike requisition points, oil and metal reserves are not gathered passively and
 Requisition points work as in Dawn of War and Company of Heroes. Owning them increases manpower income.
 
 - Any unit can capture a requisition point, but only with a capture order (select the unit and right-click the point). Driving through or idling near it does not capture it.
-- The unit has to stay inside the capture area, a small square around the point.
+- The unit has to stay inside the capture area: a square of 80 × 80 m (8 × 8 tiles) centred on the point.
 - Capturing takes 30 seconds for a single light unit.
 - Capture weight: light units count as 1, medium units as 2 and heavy units as 5.
 - More weight captures faster, but with small growth: capture speed = 1 + (weight − 1) ÷ 9. For example, weight 2 captures at ×1.1 and weight 10 at ×2.

@@ -18,8 +18,6 @@ import { THEME } from './ui/theme';
 
 /** Pixel resolution of textures relative to their size on screen at 100% zoom. */
 export const ART_SCALE = 2;
-/** Side of a reserve's footprint, metres. */
-export const RESERVE_SIZE_M = 30;
 /** HUD icon keys and their square size (px, at ART_SCALE). */
 export const ICONS = [
     'icon_manpower', 'icon_oil', 'icon_metal', 'icon_population', 'icon_settings',
@@ -58,7 +56,7 @@ export function createPlaceholders(scene: Phaser.Scene, data: GameData): void {
         for (let i = 16; i < w; i += 16) g.lineBetween(i, 0, i, h);
         g.lineStyle(2, 0x3a3835).strokeRect(1, 1, w - 2, h - 2);
     });
-    const reservePx = simLengthToPx(metres(RESERVE_SIZE_M)) * ART_SCALE;
+    const reservePx = simLengthToPx(metres(data.rules.reserveSize)) * ART_SCALE;
     make('reserve_oil', reservePx, reservePx, (w, h) => drawReserve(g, w, h, 0x1a1a1a, 0x3a3a3a));
     make('reserve_metal', reservePx, reservePx, (w, h) => drawReserve(g, w, h, 0x8a929a, 0xb8c0c8));
     make('requisition_point', 48, 48, (w, h) => {

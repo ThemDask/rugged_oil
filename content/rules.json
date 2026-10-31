@@ -18,9 +18,10 @@
   "capture": {
     "captureTime": 30,
     "decayTime": 10,
-    "areaSize": 40,
+    "areaSize": 80,
     "incomePerPoint": 10
   },
+  "reserveSize": 60,
   "reserveAmount": {
     "oil": 100,
     "metal": 150
