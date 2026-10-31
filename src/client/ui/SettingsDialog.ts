@@ -28,7 +28,7 @@ export class SettingsDialog extends Modal {
             const on = updateSettings({ fullscreen: !getSettings().fullscreen }).fullscreen;
             applyFullscreen(scene, on);
             setButtonLabel(fullscreen, this.toggleLabel('Fullscreen', on));
-        }, 300);
+        }, { width: 300 });
         this.panel.add(fullscreen);
         y += 60;
 
@@ -36,13 +36,13 @@ export class SettingsDialog extends Modal {
         const edge = createButton(scene, 0, y, this.toggleLabel('Edge scrolling', getSettings().edgeScroll), () => {
             const on = updateSettings({ edgeScroll: !getSettings().edgeScroll }).edgeScroll;
             setButtonLabel(edge, this.toggleLabel('Edge scrolling', on));
-        }, 300);
+        }, { width: 300 });
         this.panel.add(edge);
 
         this.panel.add(createButton(scene, 0, 220, 'Close', () => {
             this.close();
             onClose?.();
-        }, 160));
+        }, { width: 160 }));
     }
 
     private toggleLabel(name: string, on: boolean): string {
@@ -59,7 +59,7 @@ export class SettingsDialog extends Modal {
             refresh();
         };
         refresh();
-        this.panel.add([text, createButton(scene, 130, y, '-', () => change(-0.1), 44), createButton(scene, 190, y, '+', () => change(0.1), 44)]);
+        this.panel.add([text, createButton(scene, 130, y, '-', () => change(-0.1), { width: 44 }), createButton(scene, 190, y, '+', () => change(0.1), { width: 44 })]);
     }
 }
 

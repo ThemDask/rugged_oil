@@ -15,13 +15,13 @@ numbers come from `high-level-design.md` (HLD); how they're built is in `low-lev
 - [x] Test map: 256 × 256 tiles, obstacles, spawns, 6–8 requisition points, oil and metal reserves
 - **Done when:** tests pass, the validator accepts all HLD data, determinism test green.
 
-## M2: Menus, HUD and match shell
-- [ ] Main menu (Play, Army viewer, Settings, Exit) and match setup (map, own faction, enemy
+## M2: Menus, HUD and match shell ✅
+- [x] Main menu (Play, Army viewer, Settings, Exit) and match setup (map, own faction, enemy
       faction, Start)
-- [ ] Match: map background, obstacles, both HQs spawned; camera (WASD, screen edges, zoom)
-- [ ] `HudScene` with the HLD layout (top bar, unit inspector, action grids, minimap) in the thin
+- [x] Match: map background, obstacles, both HQs spawned; camera (WASD, screen edges, zoom)
+- [x] `HudScene` with the HLD layout (top bar, unit inspector, action grids, minimap) in the thin
       light-blue style, static values for now
-- [ ] Esc menu (pauses, Esc again closes) and the victory/defeat screen in place
+- [x] Esc menu (pauses, Esc again closes) and the victory/defeat screen in place
 - **Done when:** menu → match setup → a match with both HQs and the full HUD layout.
 
 ## M3: Control and movement

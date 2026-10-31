@@ -1,18 +1,24 @@
 import Phaser from 'phaser';
+import { THEME, textStyle } from './theme';
 
-const IDLE = 0x2a2a2e;
-const HOVER = 0x3c3c42;
-const BORDER = 0x8a8a8a;
+export interface ButtonOptions {
+    width?: number;
+    height?: number;
+    /** The highlighted main action (e.g. Play): accent-coloured border and text. */
+    primary?: boolean;
+}
 
-/** A simple text button: dark panel with a thin grey border, highlighted on hover. */
-export function createButton(scene: Phaser.Scene, x: number, y: number, label: string, onClick: () => void, width = 240): Phaser.GameObjects.Container {
-    const height = 44;
-    const bg = scene.add.rectangle(0, 0, width, height, IDLE).setStrokeStyle(1, BORDER);
-    const text = scene.add.text(0, 0, label, { fontFamily: 'sans-serif', fontSize: '20px', color: '#e8e2d6' }).setOrigin(0.5);
+/** A text button in the HUD style: dark panel, thin light-blue border, highlighted on hover. */
+export function createButton(scene: Phaser.Scene, x: number, y: number, label: string, onClick: () => void, options: ButtonOptions = {}): Phaser.GameObjects.Container {
+    const width = options.width ?? 240;
+    const height = options.height ?? 44;
+    const border = options.primary ? THEME.accent : THEME.line;
+    const bg = scene.add.rectangle(0, 0, width, height, THEME.panel, THEME.panelAlpha).setStrokeStyle(1, border);
+    const text = scene.add.text(0, 0, label, textStyle(20, options.primary ? THEME.textAccent : THEME.text)).setOrigin(0.5);
     const button = scene.add.container(x, y, [bg, text]).setSize(width, height);
     bg.setInteractive({ useHandCursor: true })
-        .on('pointerover', () => bg.setFillStyle(HOVER))
-        .on('pointerout', () => bg.setFillStyle(IDLE))
+        .on('pointerover', () => bg.setFillStyle(THEME.hover, 1))
+        .on('pointerout', () => bg.setFillStyle(THEME.panel, THEME.panelAlpha))
         .on('pointerup', (pointer: Phaser.Input.Pointer) => {
             if (pointer.leftButtonReleased()) onClick();
         });

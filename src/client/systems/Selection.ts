@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { pxToSim } from '../scale';
+import { THEME } from '../ui/theme';
 import type { UnitView } from '../views/UnitView';
 import type { CommandBridge } from './CommandBridge';
 
@@ -41,6 +42,12 @@ export class Selection {
         });
     }
 
+    /** Drops a view from the selection (e.g. when its unit died). */
+    forget(view: UnitView): void {
+        const i = this.selected.indexOf(view);
+        if (i >= 0) this.selected.splice(i, 1);
+    }
+
     /** The rectangle spanned by two corner points, in any order. */
     static dragRect(ax: number, ay: number, bx: number, by: number): Phaser.Geom.Rectangle {
         return new Phaser.Geom.Rectangle(Math.min(ax, bx), Math.min(ay, by), Math.abs(bx - ax), Math.abs(by - ay));
@@ -80,7 +87,7 @@ export class Selection {
         this.box.clear();
         if (Phaser.Math.Distance.Between(p.x, p.y, start.x, start.y) < CLICK_MAX_DRAG) return;
         const rect = Selection.dragRect(start.worldX, start.worldY, p.worldX, p.worldY);
-        this.box.fillStyle(0x7dff7d, 0.12).fillRectShape(rect);
-        this.box.lineStyle(1, 0x7dff7d, 0.8).strokeRectShape(rect);
+        this.box.fillStyle(THEME.line, 0.1).fillRectShape(rect);
+        this.box.lineStyle(1, THEME.line, 0.8).strokeRectShape(rect);
     }
 }

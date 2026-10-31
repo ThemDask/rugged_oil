@@ -408,6 +408,8 @@ content/
 | `systems/Orders.ts` | Right-click → the right Command (move, attack, capture, gather); Shift → queued |
 | `systems/CommandBridge.ts` | The only door from input into the sim |
 | `scenes/HudScene.ts` + `hud/` | The HUD: top bar, unit inspector, action buttons, minimap (see below) |
+| `placeholders.ts` | Generates placeholder textures under their final keys and sizes, only for art not loaded in `BootScene.preload()` |
+| `views/MapObjectsView.ts` | Requisition points (flag tinted by owner, capture square) and reserves |
 | `scale.ts` | `TILE_SIZE = 32` px and sim ↔ pixel conversion |
 | `settings.ts` | Player settings in `localStorage` |
 

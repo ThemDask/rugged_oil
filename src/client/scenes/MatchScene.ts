@@ -9,6 +9,7 @@ import { simToPx } from '../scale';
 import { CommandBridge } from '../systems/CommandBridge';
 import { RtsCamera } from '../systems/RtsCamera';
 import { Selection } from '../systems/Selection';
+import { MapObjectsView } from '../views/MapObjectsView';
 import { MapView } from '../views/MapView';
 import { UnitView } from '../views/UnitView';
 
@@ -17,17 +18,21 @@ const MAX_TICKS_PER_FRAME = 5;
 
 /**
  * Runs one skirmish: builds the simulation from a MatchConfig, advances it in fixed ticks, and
- * keeps one view per sim unit. The HUD (debug overlay, Esc menu) runs as a separate scene on top.
+ * keeps one view per sim unit. The HUD (HudScene) runs as a separate scene on top and reads
+ * `world`, `selection`, `humanId` and `bridge` from here.
  */
 export class MatchScene extends Phaser.Scene {
     world!: SimWorld;
+    config!: MatchConfig;
     selection!: Selection;
+    bridge!: CommandBridge;
+    camera!: RtsCamera;
+    /** The local player's id. */
+    humanId = 0;
     /** True while the Esc menu is open (single-player pauses the simulation). */
     paused = false;
 
-    private config!: MatchConfig;
-    private camera!: RtsCamera;
-    private bridge!: CommandBridge;
+    private mapObjects!: MapObjectsView;
     private readonly views = new Map<number, UnitView>();
     private ais: AiController[] = [];
     private accumulator = 0;
@@ -51,10 +56,11 @@ export class MatchScene extends Phaser.Scene {
 
         this.world = createWorld(this.config, gameData);
         const mapView = new MapView(this, gameData.map(this.config.mapId)!);
+        this.mapObjects = new MapObjectsView(this, this.world, this.config);
         this.camera = new RtsCamera(this, mapView.widthPx, mapView.heightPx);
         this.bridge = new CommandBridge(this.world);
 
-        const humanId = this.config.players.findIndex((p) => p.controller === 'human');
+        const humanId = (this.humanId = this.config.players.findIndex((p) => p.controller === 'human'));
         this.ais = this.config.players.flatMap((p, id) => (p.controller === 'ai' ? [new AiController(id)] : []));
         for (const unit of this.world.units.values()) {
             this.views.set(unit.id, new UnitView(this, unit, this.config.players[unit.playerId].color));
@@ -83,7 +89,22 @@ export class MatchScene extends Phaser.Scene {
             if (ticks === MAX_TICKS_PER_FRAME) this.accumulator = 0;
         }
         const alpha = this.paused ? 1 : this.accumulator / TICK_MS;
+        this.syncViews();
         for (const view of this.views.values()) view.update(alpha);
+        this.mapObjects.update();
+    }
+
+    /** Adds views for new units and removes views (and selection) of units that are gone. */
+    private syncViews(): void {
+        for (const unit of this.world.units.values()) {
+            if (!this.views.has(unit.id)) this.views.set(unit.id, new UnitView(this, unit, this.config.players[unit.playerId].color));
+        }
+        for (const [id, view] of this.views) {
+            if (this.world.units.has(id)) continue;
+            this.selection.forget(view);
+            view.destroy();
+            this.views.delete(id);
+        }
     }
 
     /** Ends the match and returns to the main menu. */
