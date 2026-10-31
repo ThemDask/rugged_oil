@@ -53,10 +53,10 @@ numbers come from `high-level-design.md` (HLD); how they're built is in `low-lev
       upgraded stats
 - **Done when:** all 6 HLD upgrades work.
 
-## M7: AI opponent
-- [ ] One difficulty, +25% income
-- [ ] Recruits extractors and gathers, captures points, builds an army, attacks the HQ
-- [ ] AI-vs-AI smoke test
+## M7: AI opponent ✅
+- [x] One difficulty, +25% income
+- [x] Recruits extractors and gathers, captures points, builds an army, attacks the HQ
+- [x] AI-vs-AI smoke test
 - **Done when:** a full match against the AI can be won and lost.
 
 ## M8: Polish

@@ -1,5 +1,5 @@
 import { GameData } from '../src/data/registry';
-import type { ContentDef, FactionDef, GameRules, MapDef, MountDef, UnitDef, UpgradeDef, WeaponDef } from '../src/data/types';
+import type { AiDef, ContentDef, FactionDef, GameRules, MapDef, MountDef, UnitDef, UpgradeDef, WeaponDef } from '../src/data/types';
 
 /**
  * A small, self-contained content set for tests, so sim and validator tests don't change when
@@ -23,6 +23,11 @@ export const rules = (): GameRules => ({
         heavy: { length: 16, width: 8, population: 5, captureWeight: 5 },
         hq: { length: 40, width: 24, population: 0, captureWeight: 5 },
     },
+});
+
+export const ai = (overrides: Partial<AiDef> = {}): AiDef => ({
+    type: 'ai', thinkInterval: 0.5, extractors: 2, capturers: 1, armyMix: { light: 40, medium: 40, heavy: 20 },
+    attackStrength: 1500, retreatStrength: 400, defendRadius: 300, rallyDistance: 100, researchReserve: { manpower: 200 }, ...overrides,
 });
 
 export const weapon = (overrides: Partial<WeaponDef> = {}): WeaponDef => ({
@@ -61,5 +66,7 @@ export const map = (overrides: Partial<MapDef> = {}): MapDef => ({
 
 /** A GameData built from content definitions (defaults: the fixtures above). */
 export function gameData(defs: ContentDef[] = [rules(), faction(), hq(), unit(), weapon(), mount(), upgrade(), map()]): GameData {
-    return new GameData(Object.fromEntries(defs.map((d, i) => [`fixture/${i}.json`, d])));
+    // Every content set needs AI tuning; add the default unless the test brings its own.
+    const all = defs.some((d) => d.type === 'ai') ? defs : [...defs, ai()];
+    return new GameData(Object.fromEntries(all.map((d, i) => [`fixture/${i}.json`, d])));
 }

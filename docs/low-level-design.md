@@ -217,6 +217,9 @@ A 256 × 256 grid is 65 536 tiles, which A* handles fine for orders given by pla
 - If the facing is off by **90° or more, pivot in place** (no driving sideways).
 - Otherwise drive, with speed scaled by how well it's facing the target.
 - Accelerate up to top speed; **brake** in time to stop at the target.
+- **Stuck units:** a unit that gets less than half as much closer to its destination as it meant
+  to (pushed by other units) for 2 seconds stops if it's within 50 m of it, or plans a new path
+  otherwise. This keeps crowds sent to one spot from jostling forever.
 - **Separation:** overlapping units push each other apart. A unit can't push a bigger size class
   (light < medium < heavy < HQ).
 
@@ -395,6 +398,7 @@ content/
                                 capture times, weights and area size (80 m),
                                 requisition income, reserve size (60 m) and amounts,
                                 size classes (length, width, population, capture weight)
+  ai.json                       AiDef: AI tuning (see section 14)
   weapons/*.json                WeaponDef: damage, piercing, range, rate of fire,
                                 projectile speed, max projectile distance
   mounts/*.json                 MountDef: arc, rotation speed
@@ -408,8 +412,8 @@ content/
                                 requisition points, reserves
 ```
 
-- Every file has a `type` field (`rules`, `faction`, `unit`, `weapon`, `mount`, `upgrade`,
-  `map`). Folders are only for humans.
+- Every file has a `type` field (`rules`, `ai`, `faction`, `unit`, `weapon`, `mount`,
+  `upgrade`, `map`). Folders are only for humans.
 - Ids are unique, lower_snake_case and prefixed per faction: `league_knight`,
   `raiders_destroyer`. Shared things have no prefix: `autocannon`, `turret`.
 - Names follow the HLD (manpower, oil, metal, HQ, extractor, requisition point…).
@@ -475,14 +479,34 @@ Boot ──► MainMenu ──► MatchSetup ──► Match (+ HudScene)
 
 ## 14. AI (`src/ai/`)
 
-- `AiController.think(world, playerId)` reads the sim and returns Commands. It runs a few times
-  per second, not every tick.
-- It uses **only** Commands, like the player. Its cheat (bonus income) is a `MatchConfig` value
-  that the sim applies, so it stays deterministic.
-- It plays the whole loop: recruit extractors and gather, capture requisition points, build an
-  army, attack the player's HQ.
-- **AI vision:** for simplicity the AI may read the whole sim, but it should only *target* what
-  it can see, since the sim's targeting rules already enforce visibility.
+`AiController` (one per AI player) reads the sim and returns **Commands**, exactly like a human's
+input; its only advantage is the income bonus, which the sim applies. All tuning is data in
+`content/ai.json` (type `ai`): think interval, extractor and capturer counts, army size-class mix,
+attack and retreat strength, defend radius, rally distance, resources kept back from research.
+
+- It thinks every `thinkInterval` (0.5 s), offset per player, in a fixed order of managers:
+  1. **Economy:** keep `extractors` extractors (recruit when short); send idle ones to the
+     nearest non-empty reserve with fewer than two of its extractors.
+  2. **Expansion:** keep `capturers` of the fastest unarmed unit; send idle ones to capture the
+     nearest point it doesn't own.
+  3. **Production:** keep up to two units queued; pick the size class furthest below its share of
+     `armyMix`, then its strongest affordable unit, else the strongest affordable combat unit of
+     any class (so scarce oil or metal never stalls it).
+  4. **Research:** next upgrade in faction order when affordable on top of `researchReserve`;
+     apply researched per-unit upgrades to units that lack them. Once the army has 6 units,
+     research gets first claim on resources.
+  5. **Army:** gather at a rally point in front of the HQ; attack-move to visible enemies within
+     `defendRadius` of the HQ or an owned point; once the army's strength (summed manpower cost)
+     reaches `attackStrength`, attack the nearest enemy-owned point, then the enemy HQ's last known
+     position, capturing points it stands on; fall back below `retreatStrength`. The whole army
+     gets one order per new target, so it moves as one formation.
+- **Never writes sim state:** each decision works on a copy of its resources, queue and
+  population (a budget), so managers don't spend the same resources twice. A test checks that
+  the checksum doesn't change while the AI thinks.
+- **Deterministic:** integers only, units in id order, no randomness. Every machine computes the
+  same AI commands, so it works with lockstep.
+- **Roles from data:** extractors are units with extraction stats, capturers the fastest unit
+  without weapons, combat units everything else armed. No faction-specific AI code.
 
 ---
 
@@ -518,8 +542,11 @@ over `SimWorld`, called by `step()` in the order of section 4.
   requires identical checksums every tick. If this breaks, something non-deterministic crept in.
 - **Architecture test:** scans `src/sim`, `src/data`, `src/setup`, `src/ai` for Phaser imports
   and banned APIs.
-- **AI smoke test:** AI vs AI for a few thousand ticks without errors, and someone wins or the
-  match keeps progressing.
+- **AI tests** (`tests/ai.test.ts`): a 12-minute AI-vs-AI match on the real data must show
+  extractors, captured points, research and fighting for both sides; the AI never changes sim
+  state while thinking; two AI matches with the same seed agree on every tick.
+- Vitest's on-disk module cache is off (`vitest.config.ts`): it misses new files matched by
+  `import.meta.glob`, so a new content file would otherwise be invisible to the tests.
 - The client is checked by typecheck, build and playing it (`npm run dev`).
 
 ---

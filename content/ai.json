@@ -1,0 +1,18 @@
+{
+  "type": "ai",
+  "thinkInterval": 0.5,
+  "extractors": 3,
+  "capturers": 2,
+  "armyMix": {
+    "light": 30,
+    "medium": 45,
+    "heavy": 25
+  },
+  "attackStrength": 1500,
+  "retreatStrength": 500,
+  "defendRadius": 350,
+  "rallyDistance": 150,
+  "researchReserve": {
+    "manpower": 300
+  }
+}

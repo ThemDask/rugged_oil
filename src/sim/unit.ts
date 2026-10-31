@@ -56,6 +56,8 @@ export interface SimUnit {
     load: Resources;
     /** Extraction progress toward the next whole unit of resource, in 1/TICKS_PER_MINUTE units. */
     extractCarry: number;
+    /** Ticks in a row the unit tried to drive but hardly moved (pushed against other units). */
+    stuckTicks: number;
     /** Marked when killed; removed at the end of the tick. */
     dead: boolean;
 
@@ -89,6 +91,7 @@ export function createUnit(id: number, playerId: number, defId: string, isHq: bo
         attackedBy: [],
         load: {},
         extractCarry: 0,
+        stuckTicks: 0,
         dead: false,
         previousPosition: { ...at },
         previousHeading: h,

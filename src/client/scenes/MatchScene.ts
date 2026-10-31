@@ -69,7 +69,7 @@ export class MatchScene extends Phaser.Scene {
         this.bridge = new CommandBridge(this.world);
 
         const humanId = (this.humanId = this.config.players.findIndex((p) => p.controller === 'human'));
-        this.ais = this.config.players.flatMap((p, id) => (p.controller === 'ai' ? [new AiController(id)] : []));
+        this.ais = this.config.players.flatMap((p, id) => (p.controller === 'ai' ? [new AiController(id, this.world)] : []));
         for (const unit of this.world.units.values()) {
             this.views.set(unit.id, new UnitView(this, unit, this.config.players[unit.playerId].color));
         }

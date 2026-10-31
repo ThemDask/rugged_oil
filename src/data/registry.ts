@@ -1,4 +1,4 @@
-import type { ContentDef, FactionDef, GameRules, MapDef, MountDef, UnitDef, UpgradeDef, WeaponDef } from './types';
+import type { AiDef, ContentDef, FactionDef, GameRules, MapDef, MountDef, UnitDef, UpgradeDef, WeaponDef } from './types';
 import { validateContent } from './validate';
 
 /**
@@ -7,6 +7,7 @@ import { validateContent } from './validate';
  */
 export class GameData {
     readonly rules: GameRules;
+    readonly ai: AiDef;
     private readonly factionMap = new Map<string, FactionDef>();
     private readonly unitMap = new Map<string, UnitDef>();
     private readonly weaponMap = new Map<string, WeaponDef>();
@@ -17,6 +18,7 @@ export class GameData {
     /** `files` maps a source path (for error messages) to its parsed JSON. */
     constructor(files: Record<string, ContentDef>) {
         let rules: GameRules | undefined;
+        let ai: AiDef | undefined;
         // Sorted by path so the result never depends on file system order.
         for (const path of Object.keys(files).sort()) {
             const def = files[path];
@@ -24,6 +26,10 @@ export class GameData {
                 case 'rules':
                     if (rules) throw new Error(`More than one rules file: ${path}`);
                     rules = def;
+                    break;
+                case 'ai':
+                    if (ai) throw new Error(`More than one ai file: ${path}`);
+                    ai = def;
                     break;
                 case 'faction':
                     register(this.factionMap, def, path);
@@ -48,7 +54,9 @@ export class GameData {
             }
         }
         if (!rules) throw new Error('No rules file found in content/.');
+        if (!ai) throw new Error('No ai file found in content/.');
         this.rules = rules;
+        this.ai = ai;
     }
 
     faction(id: string): FactionDef | undefined {
@@ -116,6 +124,7 @@ export class GameData {
     validate(): string[] {
         return validateContent({
             rules: this.rules,
+            ai: this.ai,
             factions: this.factions(),
             units: this.units(),
             weapons: this.weapons(),

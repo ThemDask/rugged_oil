@@ -1,8 +1,9 @@
-import { SIZE_CLASSES, type FactionDef, type GameRules, type MapDef, type MountDef, type Resources, type UnitDef, type UpgradeDef, type WeaponDef, type WeaponSlot } from './types';
+import { SIZE_CLASSES, type AiDef, type FactionDef, type GameRules, type MapDef, type MountDef, type Resources, type UnitDef, type UpgradeDef, type WeaponDef, type WeaponSlot } from './types';
 
 /** Everything the validator looks at. */
 export interface ContentSet {
     rules: GameRules;
+    ai: AiDef;
     factions: FactionDef[];
     units: UnitDef[];
     weapons: WeaponDef[];
@@ -16,7 +17,7 @@ export interface ContentSet {
  * a bad edit to any content file fails the tests with a readable message.
  */
 export function validateContent(content: ContentSet): string[] {
-    const { rules, factions, units, weapons, mounts, upgrades, maps } = content;
+    const { rules, ai, factions, units, weapons, mounts, upgrades, maps } = content;
     const problems: string[] = [];
     const unitById = new Map(units.map((u) => [u.id, u]));
     const weaponIds = new Set(weapons.map((w) => w.id));
@@ -53,6 +54,12 @@ export function validateContent(content: ContentSet): string[] {
         if (!s) problems.push(`Rules: missing size class '${c}'.`);
         else positive(`Rules: size class '${c}'`, { length: s.length, width: s.width, captureWeight: s.captureWeight });
     }
+
+    // AI tuning
+    positive('AI', { thinkInterval: ai.thinkInterval, attackStrength: ai.attackStrength, defendRadius: ai.defendRadius, rallyDistance: ai.rallyDistance });
+    if (!(ai.extractors >= 0 && ai.capturers >= 0 && ai.retreatStrength >= 0)) problems.push('AI: extractors, capturers and retreatStrength must be >= 0.');
+    if (ai.armyMix.light + ai.armyMix.medium + ai.armyMix.heavy !== 100) problems.push('AI: armyMix must add up to 100.');
+    resources('AI', 'researchReserve', ai.researchReserve);
 
     // Factions
     for (const f of factions) {

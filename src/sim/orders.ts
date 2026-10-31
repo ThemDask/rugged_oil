@@ -24,6 +24,10 @@ import type { SimWorld } from './world';
 const TOUCH_GAP = 500;
 /** Ticks between re-planning a path toward a moving HQ. */
 const REPLAN_TICKS = 40;
+/** A unit stuck this long (2 s) close to its destination counts as arrived... */
+const STUCK_TICKS = 40;
+/** ...if it's within this distance of it (50 m); further away, it plans a new path. */
+const CLOSE_ENOUGH = 5000;
 
 /** Gives a unit an order: replaces its orders, or appends when `queue` is set (Shift). */
 export function giveOrder(world: SimWorld, unit: SimUnit, order: Order, queue: boolean): void {
@@ -39,6 +43,7 @@ export function giveOrder(world: SimWorld, unit: SimUnit, order: Order, queue: b
 export function stepOrders(world: SimWorld, units: SimUnit[]): void {
     for (const unit of units) {
         if (unit.dead) continue;
+        if (unit.stuckTicks >= STUCK_TICKS) unstick(world, unit);
         if (orderDone(world, unit)) {
             unit.orders.shift();
             startOrder(world, unit);
@@ -78,6 +83,22 @@ function orderDone(world: SimWorld, unit: SimUnit): boolean {
         }
         case 'gather':
             return stepGather(world, unit, order);
+    }
+}
+
+/**
+ * Groups sent to the same spot can't all stand on it and push against each other. A unit that
+ * has hardly moved for a while stops if it's close to its destination, or re-plans otherwise.
+ */
+function unstick(world: SimWorld, unit: SimUnit): void {
+    unit.stuckTicks = 0;
+    const destination = unit.waypoints[unit.waypoints.length - 1];
+    if (!destination) return;
+    if (length(vsub(destination, unit.position)) <= CLOSE_ENOUGH) {
+        unit.waypoints = [];
+        unit.speedFx = 0;
+    } else {
+        planPath(world.grid, unit, destination);
     }
 }
 

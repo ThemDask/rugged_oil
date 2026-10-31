@@ -195,4 +195,27 @@ export interface MapDef {
     reserves: { x: number; y: number; resource: string }[];
 }
 
-export type ContentDef = GameRules | FactionDef | UnitDef | WeaponDef | MountDef | UpgradeDef | MapDef;
+/** Tuning for the computer opponent (src/ai). One file, used by every AI player. */
+export interface AiDef {
+    type: 'ai';
+    /** Seconds between AI decisions. */
+    thinkInterval: number;
+    /** Extractors to keep. */
+    extractors: number;
+    /** Fast unarmed units (scouts) to keep for capturing requisition points. */
+    capturers: number;
+    /** Wanted share of combat units per size class, percent (sums to 100). */
+    armyMix: Record<'light' | 'medium' | 'heavy', number>;
+    /** Army strength (sum of its units' manpower cost) at which the AI attacks. */
+    attackStrength: number;
+    /** Army strength below which an attack is called off and the army falls back. */
+    retreatStrength: number;
+    /** Metres around the HQ and owned points within which visible enemies are attacked. */
+    defendRadius: number;
+    /** Metres in front of the HQ where the army gathers. */
+    rallyDistance: number;
+    /** Resources kept back for units before buying research. */
+    researchReserve: Resources;
+}
+
+export type ContentDef = GameRules | FactionDef | UnitDef | WeaponDef | MountDef | UpgradeDef | MapDef | AiDef;

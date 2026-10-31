@@ -22,8 +22,19 @@ const SIZE_RANK: Record<SizeClass, number> = { light: 0, medium: 1, heavy: 2, hq
  * destination, then push overlapping units apart. Units are processed in ascending id order.
  */
 export function stepMovement(units: SimUnit[], grid: SimGrid): void {
-    for (const unit of units) drive(unit, grid);
+    const intended = units.map((unit) => drive(unit, grid));
     separate(units, grid);
+    // A unit that drives but gets less than half as much closer to its destination as it meant
+    // to (pushed back or sideways by other units) counts as stuck.
+    units.forEach((unit, i) => {
+        const destination = unit.waypoints[unit.waypoints.length - 1];
+        if (intended[i] <= 0 || !destination) {
+            unit.stuckTicks = 0;
+            return;
+        }
+        const progress = length(vsub(destination, unit.previousPosition)) - length(vsub(destination, unit.position));
+        unit.stuckTicks = progress * 2 < intended[i] ? unit.stuckTicks + 1 : 0;
+    });
 }
 
 /** Turns the hull toward `desired` by at most the unit's turn rate this tick. */
@@ -34,7 +45,8 @@ export function turnToward(unit: SimUnit, desired: number): void {
     unit.heading = wrapAngle(unit.heading + clamp(angleDiff(unit.heading, desired), -steps, steps));
 }
 
-function drive(unit: SimUnit, grid: SimGrid): void {
+/** Drives one unit for a tick; returns how far it meant to move (0 when idle or arriving). */
+function drive(unit: SimUnit, grid: SimGrid): number {
     const speed = idiv(unit.speedFx, ONE);
     // Skip intermediate waypoints already reached.
     while (unit.waypoints.length > 1 && length(vsub(unit.waypoints[0], unit.position)) <= Math.max(WAYPOINT_REACHED, speed * 2)) {
@@ -42,7 +54,7 @@ function drive(unit: SimUnit, grid: SimGrid): void {
     }
     if (unit.waypoints.length === 0) {
         unit.speedFx = 0;
-        return;
+        return 0;
     }
 
     const target = unit.waypoints[0];
@@ -53,7 +65,7 @@ function drive(unit: SimUnit, grid: SimGrid): void {
         unit.position = { ...target };
         unit.speedFx = 0;
         unit.waypoints = [];
-        return;
+        return 0;
     }
 
     const desired = atan2Steps(toTarget.y, toTarget.x);
@@ -73,6 +85,7 @@ function drive(unit: SimUnit, grid: SimGrid): void {
     const next = vadd(unit.position, fromAngle(unit.heading, idiv(unit.speedFx, ONE)));
     if (grid.isBlocked(cellOf(next))) unit.speedFx = 0;
     else unit.position = next;
+    return idiv(unit.speedFx, ONE);
 }
 
 /** Pushes overlapping units apart. A unit is never pushed by a smaller size class. */
