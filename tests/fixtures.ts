@@ -6,7 +6,7 @@ import type { AiDef, ContentDef, FactionDef, GameRules, MapDef, MountDef, UnitDe
  * the real game data (content/) is rebalanced.
  */
 
-export const rules = (): GameRules => ({
+export const rules = (overrides: Partial<GameRules> = {}): GameRules => ({
     type: 'rules',
     resources: ['manpower', 'oil', 'metal'],
     startingResources: { manpower: 500 },
@@ -23,6 +23,7 @@ export const rules = (): GameRules => ({
         heavy: { length: 16, width: 8, population: 5, captureWeight: 5 },
         hq: { length: 40, width: 24, population: 0, captureWeight: 5 },
     },
+    ...overrides,
 });
 
 export const ai = (overrides: Partial<AiDef> = {}): AiDef => ({

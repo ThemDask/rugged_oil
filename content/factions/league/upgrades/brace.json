@@ -10,7 +10,7 @@
     "oil": 10,
     "metal": 50
   },
-  "researchTime": 60,
+  "researchTime": 30,
   "apply": "automatic",
   "effects": [
     {

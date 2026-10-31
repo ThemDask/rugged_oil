@@ -102,6 +102,6 @@ describe('determinism', () => {
         expect(world.reqPoints.size).toBe(8);
         expect(world.reserves.size).toBe(8);
         expect(world.players.get(0)!.resources).toEqual({ manpower: 500, oil: 0, metal: 0 });
-        expect(world.players.get(1)!.incomeBonusPercent).toBe(25);
+        expect(world.players.get(1)!.incomeBonusPercent).toBe(data.rules.aiIncomeBonusPercent);
     });
 });

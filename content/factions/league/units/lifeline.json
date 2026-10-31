@@ -31,12 +31,12 @@
   "extraction": {
     "mode": "haul",
     "ratePerMinute": {
-      "oil": 15,
-      "metal": 30
+      "oil": 30,
+      "metal": 60
     },
     "maxLoad": {
-      "oil": 10,
-      "metal": 15
+      "oil": 30,
+      "metal": 60
     }
   }
 }

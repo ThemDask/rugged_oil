@@ -11,7 +11,9 @@
     "metal": 0
   },
   "baseIncome": {
-    "manpower": 10
+    "manpower": 4,
+    "oil": 0.1,
+    "metal": 0.2
   },
   "populationCap": 100,
   "productionQueueSize": 5,
@@ -26,7 +28,7 @@
     "oil": 100,
     "metal": 150
   },
-  "aiIncomeBonusPercent": 25,
+  "aiIncomeBonusPercent": 1,
   "sizeClasses": {
     "light": {
       "length": 8,

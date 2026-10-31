@@ -11,7 +11,7 @@
     "side": 60,
     "rear": 60
   },
-  "health": 10000,
+  "health": 15000,
   "spottingRange": 300,
   "topSpeed": 15,
   "acceleration": 1,

@@ -4,7 +4,7 @@ import { loadGameData } from '../../src/data/content';
 import { SimGrid, cellCenter } from '../../src/sim/grid';
 import { SimWorld } from '../../src/sim/world';
 
-/** The six HLD upgrades, on the real game data. Research takes 60 s. */
+/** The six HLD upgrades, on the real game data. Times and costs are read from the data, so rebalancing doesn't break these tests. */
 const data = loadGameData();
 const SECOND = 20;
 
@@ -25,21 +25,23 @@ function run(w: SimWorld, ticks: number): void {
 
 function researched(w: SimWorld, playerId: number, upgradeId: string): void {
     w.schedule({ type: 'research', playerId, upgradeId });
-    run(w, 60 * SECOND + 1);
+    run(w, data.upgrade(upgradeId)!.researchTime * SECOND + 1);
     expect(w.players.get(playerId)!.researched).toContain(upgradeId);
 }
 
 describe('research', () => {
-    it('pays at the start, takes 60 seconds, one research at a time', () => {
+    it('pays at the start, takes its research time, one research at a time', () => {
         const w = world();
         const league = w.players.get(0)!;
+        const brace = data.upgrade('league_brace')!;
         w.schedule({ type: 'research', playerId: 0, upgradeId: 'league_brace' });
         w.schedule({ type: 'research', playerId: 0, upgradeId: 'league_knightly_vows' });
         run(w, 1);
         expect(league.research?.upgradeId).toBe('league_brace');
-        expect(league.resources.oil).toBe(990);
-        expect(league.resources.metal).toBe(950);
-        run(w, 59 * SECOND);
+        // Paid in full (base income may have added less than 1 in that tick).
+        expect(league.resources.oil).toBe(1000 - (brace.cost.oil ?? 0));
+        expect(league.resources.metal).toBe(1000 - (brace.cost.metal ?? 0));
+        run(w, (brace.researchTime - 1) * SECOND);
         expect(league.researched).toEqual([]);
         run(w, 1 * SECOND);
         expect(league.researched).toEqual(['league_brace']);

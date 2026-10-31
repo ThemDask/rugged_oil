@@ -10,7 +10,7 @@
     "oil": 0,
     "metal": 10
   },
-  "researchTime": 60,
+  "researchTime": 30,
   "apply": "perUnit",
   "applyCost": {
     "manpower": 25

@@ -10,7 +10,7 @@
     "oil": 10,
     "metal": 20
   },
-  "researchTime": 60,
+  "researchTime": 30,
   "apply": "perUnit",
   "applyCost": {},
   "effects": [
