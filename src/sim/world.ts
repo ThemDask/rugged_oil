@@ -1,11 +1,11 @@
 import { unitStats, type UnitStats } from '../data/convert';
 import type { GameData } from '../data/registry';
-import { compareCommands, isValidCommand, type Command, type HoldFireCommand, type MoveCommand, type StopCommand } from './commands';
+import { compareCommands, isValidCommand, type AttackMoveCommand, type Command, type HoldFireCommand, type MoveCommand, type StopCommand } from './commands';
 import { formationBlock, spacingFor } from './formation';
-import { SimGrid, cellCenter, cellOf, clearanceFor } from './grid';
-import { idiv, type Vec } from './math';
+import type { SimGrid } from './grid';
+import type { Vec } from './math';
 import { stepMovement } from './movement';
-import { stepOrders } from './orders';
+import { giveOrder, stepOrders } from './orders';
 import { SimRng } from './rng';
 import type { PlayerState, SimProjectile, SimReqPoint, SimReserve } from './state';
 import { stepCapture, stepCombat, stepEconomy, stepProduction, stepProjectiles, stepVisibility } from './systems';
@@ -123,7 +123,7 @@ export class SimWorld {
         stepCapture(this);
         stepVisibility(this);
         const units = [...this.units.values()];
-        stepOrders(units);
+        stepOrders(units, this.grid);
         stepMovement(units, this.grid);
         stepCombat(this);
         stepProjectiles(this);
@@ -159,6 +159,7 @@ export class SimWorld {
             if (!isValidCommand(command) || !this.players.has(command.playerId)) continue;
             switch (command.type) {
                 case 'move':
+                case 'attackMove':
                     this.executeMove(command);
                     break;
                 case 'stop':
@@ -167,8 +168,8 @@ export class SimWorld {
                 case 'holdFire':
                     this.executeHoldFire(command);
                     break;
-                // attack, attackMove, capture, gather, recruit, cancelRecruit, research and
-                // applyUpgrade are accepted but have no effect until M4-M6 implement them.
+                // attack, capture, gather, recruit, cancelRecruit, research and applyUpgrade
+                // are accepted but have no effect until M4-M6 implement them.
             }
         }
     }
@@ -181,16 +182,13 @@ export class SimWorld {
             .filter((u): u is SimUnit => u !== undefined && !u.dead && u.playerId === command.playerId);
     }
 
-    private executeMove(command: MoveCommand): void {
-        // Shift-queued orders arrive in M3; for now every move replaces the current orders.
+    /** Move and attack-move: the group is spread over a formation block around the target. */
+    private executeMove(command: MoveCommand | AttackMoveCommand): void {
         const group = this.ownUnits(command);
         if (group.length === 0) return;
         const largest = Math.max(...group.map((u) => u.stats.radius));
         const targets = formationBlock(command.target, group.length, spacingFor(largest));
-        group.forEach((unit, i) => {
-            unit.orders = [{ type: 'move', target: targets[i] }];
-            this.planPath(unit, targets[i]);
-        });
+        group.forEach((unit, i) => giveOrder(this.grid, unit, { type: command.type, target: targets[i] }, command.queue === true));
     }
 
     private executeStop(command: StopCommand): void {
@@ -202,22 +200,6 @@ export class SimWorld {
 
     private executeHoldFire(command: HoldFireCommand): void {
         for (const unit of this.ownUnits(command)) unit.holdFire = command.holdFire;
-    }
-
-    private planPath(unit: SimUnit, target: Vec): void {
-        unit.waypoints = [];
-        const needed = clearanceFor(halfWidth(unit));
-        const start = cellOf(unit.position);
-        const goal = cellOf(target);
-        const cells = this.grid.findPath(start, goal, needed);
-        if (cells.length === 0) {
-            if (start.x === goal.x && start.y === goal.y && this.grid.isPassable(goal, needed)) unit.waypoints = [{ ...target }];
-            return;
-        }
-        unit.waypoints = this.grid.smooth(start, cells, needed).map(cellCenter);
-        // Finish exactly on the target when its tile was reachable.
-        const last = cells[cells.length - 1];
-        if (last.x === goal.x && last.y === goal.y) unit.waypoints[unit.waypoints.length - 1] = { ...target };
     }
 
     /** Removes dead units and spent projectiles, then checks whether the match is over. */
@@ -235,11 +217,6 @@ export class SimWorld {
         const alive = [...this.players.values()].filter((p) => !p.defeated);
         if (alive.length === 1 && this.players.size > 1) this.winner = alive[0].id;
     }
-}
-
-/** Pathfinding clearance is sized by half the unit's width, so it fits gaps at least as wide as itself. */
-function halfWidth(unit: SimUnit): number {
-    return idiv(unit.stats.width + 1, 2);
 }
 
 /** FNV-1a style mixing on 32-bit integers. */

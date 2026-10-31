@@ -59,6 +59,36 @@ describe('SimWorld', () => {
         expect(a.waypoints.at(-1)).not.toEqual(b.waypoints.at(-1));
     });
 
+    it('drives through Shift-queued orders one after another', () => {
+        const w = world();
+        const tank = w.spawnUnit('t_tank', 0, cellCenter({ x: 3, y: 3 }));
+        const first = cellCenter({ x: 6, y: 12 });
+        const second = cellCenter({ x: 20, y: 12 });
+        w.schedule({ type: 'move', playerId: 0, unitIds: [tank.id], target: first });
+        w.schedule({ type: 'move', playerId: 0, unitIds: [tank.id], target: second, queue: true });
+        w.step();
+        expect(tank.orders.map((o) => o.type)).toEqual(['move', 'move']);
+        let passedFirst = false;
+        run(w, 800, () => {
+            if (tank.position.x === first.x && tank.position.y === first.y) passedFirst = true;
+        });
+        expect(passedFirst).toBe(true);
+        expect(tank.position).toEqual(second);
+        expect(tank.orders).toEqual([]);
+    });
+
+    it('a new order without Shift replaces the queue', () => {
+        const w = world();
+        const tank = w.spawnUnit('t_tank', 0, cellCenter({ x: 3, y: 3 }));
+        w.schedule({ type: 'move', playerId: 0, unitIds: [tank.id], target: cellCenter({ x: 6, y: 12 }) });
+        w.schedule({ type: 'move', playerId: 0, unitIds: [tank.id], target: cellCenter({ x: 20, y: 12 }), queue: true });
+        w.schedule({ type: 'attackMove', playerId: 0, unitIds: [tank.id], target: cellCenter({ x: 8, y: 3 }) });
+        w.step();
+        expect(tank.orders).toEqual([{ type: 'attackMove', target: cellCenter({ x: 8, y: 3 }) }]);
+        run(w, 300);
+        expect(tank.position).toEqual(cellCenter({ x: 8, y: 3 }));
+    });
+
     it('stop clears orders and the path', () => {
         const w = world();
         const tank = w.spawnUnit('t_tank', 0, cellCenter({ x: 3, y: 3 }));

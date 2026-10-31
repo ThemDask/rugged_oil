@@ -89,7 +89,10 @@ export class HudScene extends Phaser.Scene {
                 this.issue({ type: 'holdFire', playerId: match.humanId, unitIds, holdFire });
                 break;
             }
-            // Move and Attack-move pick a target on the map: M3.
+            case 'move':
+            case 'attackMove':
+                match.selection.setTargeting(action);
+                break;
         }
     }
 
@@ -100,6 +103,10 @@ export class HudScene extends Phaser.Scene {
     private toggleMenu(): void {
         const match = this.match();
         if (this.ended) return;
+        if (match.selection.targeting) {
+            match.selection.setTargeting(null);
+            return;
+        }
         if (this.menu) {
             this.menu.close();
             this.menu = null;

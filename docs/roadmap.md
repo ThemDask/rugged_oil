@@ -24,10 +24,10 @@ numbers come from `high-level-design.md` (HLD); how they're built is in `low-lev
 - [x] Esc menu (pauses, Esc again closes) and the victory/defeat screen in place
 - **Done when:** menu → match setup → a match with both HQs and the full HUD layout.
 
-## M3: Control and movement
-- [ ] Selection (click, box, Shift), control groups, move, stop, Shift-queued orders
-- [ ] Movement at the new scale; separation by size class
-- [ ] Order indicator lines, selection rectangles, live unit inspector, minimap dots and
+## M3: Control and movement ✅
+- [x] Selection (click, box, Shift), control groups, move, stop, Shift-queued orders
+- [x] Movement at the new scale; separation by size class
+- [x] Order indicator lines, selection rectangles, live unit inspector, minimap dots and
       click-to-move-camera
 - **Done when:** the HQ and debug-spawned units drive around the map comfortably.
 
