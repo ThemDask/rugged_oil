@@ -28,6 +28,7 @@ const script: Command[] = [
     { type: 'recruit', playerId: 1, unitDefId: 'raiders_gatherer', tick: 2 },
     { type: 'recruit', playerId: 1, unitDefId: 'raiders_spotter', tick: 3 },
     { type: 'cancelRecruit', playerId: 1, index: 1, tick: 4 },
+    { type: 'research', playerId: 1, upgradeId: 'raiders_tactical_gatherer', tick: 6 },
     { type: 'capture', playerId: 0, unitIds: [hq0], pointId: point0, queue: true, tick: 600 },
     // The Lifeline is the second unit spawned in the match (the Raiders' Gatherer finishes first).
     { type: 'gather', playerId: 0, unitIds: [hq1 + 2], reserveId: reserve0, tick: 700 },

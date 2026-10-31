@@ -31,7 +31,7 @@ export function canAfford(player: PlayerState, cost: Resources): boolean {
     return Object.entries(cost).every(([res, amount]) => (player.resources[res] ?? 0) >= amount);
 }
 
-function pay(player: PlayerState, cost: Resources): void {
+export function pay(player: PlayerState, cost: Resources): void {
     for (const [res, amount] of Object.entries(cost)) player.resources[res] -= amount;
 }
 

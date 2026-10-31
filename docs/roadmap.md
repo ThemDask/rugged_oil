@@ -47,9 +47,9 @@ numbers come from `high-level-design.md` (HLD); how they're built is in `low-lev
 - [x] Death; an HQ dying ends the match with the victory/defeat screen
 - **Done when:** a full match is playable (debug control of both sides, or a passive enemy).
 
-## M6: Upgrades
-- [ ] Research at the HQ (1 minute), per-unit application with apply cost, automatic upgrades
-- [ ] The 4 effect types (add armour, add stat, add weapon, replace weapon); inspector shows
+## M6: Upgrades ✅
+- [x] Research at the HQ (1 minute), per-unit application with apply cost, automatic upgrades
+- [x] The 4 effect types (add armour, add stat, add weapon, replace weapon); inspector shows
       upgraded stats
 - **Done when:** all 6 HLD upgrades work.
 

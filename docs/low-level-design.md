@@ -367,7 +367,19 @@ time, and its apply mode: **automatic** (active for all current and future units
 or **per unit** (with an apply cost, through `applyUpgrade`).
 
 A unit's **effective stats** = its base definition + the effects of its automatic and applied
-upgrades. They're recalculated when an upgrade becomes active, not every tick.
+upgrades (`sim/upgrades.ts`): the effects are applied to a copy of the unit definition (still in
+HLD units; armour is capped at 100) and converted to sim units again. They're recalculated only
+when an upgrade becomes active for the unit, or when it spawns, never every tick. Mount angles
+and cooldowns carry over for weapon slots that stay.
+
+- **Research** happens at the HQ, **one upgrade at a time** (the HLD doesn't say; this keeps the
+  HQ's choices meaningful), paid when it starts. It needs a living HQ.
+- **Applying** a per-unit upgrade pays its apply cost unit by unit, in id order, until the
+  player can't afford the next one.
+- **HUD:** with the HQ selected, upgrade buttons show a progress bar while researching and a
+  tick once done; with another unit selected, the researched per-unit upgrades for its type
+  appear as buttons that apply to the selected units of that type. Buttons dim when their action
+  isn't possible; the inspector shows upgraded stats.
 
 ---
 

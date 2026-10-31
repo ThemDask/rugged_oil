@@ -23,7 +23,7 @@ export class UnitInspector {
     private readonly iconSize: number;
     private readonly barX: number;
     private readonly barWidth: number;
-    private shown: { id: number; health: number; load: string } | null = null;
+    private shown: { id: number; health: number; load: string; stats: SimUnit['stats'] } | null = null;
 
     constructor(scene: Phaser.Scene, r: Rect, private readonly data: GameData) {
         this.iconSize = r.h - 2 * PAD;
@@ -52,18 +52,20 @@ export class UnitInspector {
             return;
         }
         const load = Object.entries(unit.load).filter(([, n]) => n > 0).map(([res, n]) => `${n} ${res}`).join(', ');
-        if (this.shown?.id === unit.id && this.shown.health === unit.health && this.shown.load === load) return;
-        if (this.shown?.id !== unit.id) {
+        const same = this.shown?.id === unit.id && this.shown.stats === unit.stats;
+        if (same && this.shown!.health === unit.health && this.shown!.load === load) return;
+        if (!same) {
             const def = this.data.requireUnit(unit.defId);
             this.icon.setTexture(unit.defId).setTint(color);
             this.icon.setScale(this.iconSize / Math.max(this.icon.width, this.icon.height));
             const a = unit.stats.armour;
             this.stats[0].setText(`${a.front} / ${a.side} / ${a.rear}`);
-            this.stats[1].setText(`${def.topSpeed} m/s`);
+            // Effective (upgraded) top speed, from sim units per tick back to m/s.
+            this.stats[1].setText(`${Math.round((unit.stats.topSpeedFx * 20) / 1024 / 100)} m/s`);
             this.stats[2].setText(`${def.spottingRange} m`);
         }
         this.name.setText(this.data.requireUnit(unit.defId).displayName + (load ? `  (carrying ${load})` : ''));
-        this.shown = { id: unit.id, health: unit.health, load };
+        this.shown = { id: unit.id, health: unit.health, load, stats: unit.stats };
         const max = unit.stats.health;
         const barY = PAD + 40;
         this.hp.setText(`HP ${unit.health} / ${max}`);

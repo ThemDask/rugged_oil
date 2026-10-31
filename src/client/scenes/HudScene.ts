@@ -48,6 +48,7 @@ export class HudScene extends Phaser.Scene {
             basic: (action) => this.basicAction(action),
             recruit: (unitDefId) => this.issue({ type: 'recruit', playerId: match.humanId, unitDefId }),
             research: (upgradeId) => this.issue({ type: 'research', playerId: match.humanId, upgradeId }),
+            apply: (upgradeId) => this.issue({ type: 'applyUpgrade', playerId: match.humanId, upgradeId, unitIds: match.selection.selected.map((v) => v.id) }),
         });
         this.queue = new ProductionQueue(this, layout.advanced, gameData.rules.productionQueueSize, match.world, (index) =>
             this.issue({ type: 'cancelRecruit', playerId: match.humanId, index }),
@@ -69,7 +70,7 @@ export class HudScene extends Phaser.Scene {
 
         this.topBar.update(player);
         this.inspector.update(first, color);
-        this.actions.update(first, player, color);
+        this.actions.update(match.selection.selected.map((v) => v.unit), player, color);
         this.queue.update(first?.isHq ? player : undefined, color);
         this.minimap.update(delta, match.cameras.main.worldView);
         this.debug.update(this.game, world, match.selection.selected.length);

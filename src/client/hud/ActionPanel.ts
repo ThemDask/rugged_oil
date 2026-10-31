@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import type { GameData } from '../../data/registry';
 import type { Resources } from '../../data/types';
+import { ticks } from '../../data/convert';
 import { canAfford } from '../../sim/production';
+import { isAutomatic } from '../../sim/upgrades';
 import type { PlayerState } from '../../sim/state';
 import type { SimUnit } from '../../sim/unit';
 import type { IconKey } from '../placeholders';
@@ -22,13 +24,16 @@ export interface ActionHandlers {
     basic(action: BasicAction): void;
     recruit(unitDefId: string): void;
     research(upgradeId: string): void;
+    apply(upgradeId: string): void;
 }
 
 interface ButtonSpec {
     texture?: string;
-    /** Recruit buttons: the unit, so the button can be dimmed when it can't be recruited. */
-    unitDefId?: string;
     label?: string;
+    /** What the button does, so it can be dimmed (or show progress) when that isn't possible. */
+    kind?: 'recruit' | 'research' | 'apply';
+    /** The unit (recruit) or upgrade (research, apply) id. */
+    id?: string;
     tooltip: string;
     onClick: () => void;
 }
@@ -36,14 +41,18 @@ interface ButtonSpec {
 /**
  * HLD HUD (3) and (4): the basic actions (2 × 2: Move, Stop, Attack-move, Hold fire) and, split
  * by a thin vertical line, the advanced actions (6 × 2), which depend on the selected unit. With
- * the HQ selected they are its recruit buttons and upgrades. A tooltip above shows what a
- * button does and costs.
+ * the HQ selected they are its recruit buttons and upgrades to research (with a progress bar
+ * while researching and a tick once done); with another unit selected, the researched per-unit
+ * upgrades for its type, applied to the selected units of that type. A tooltip above shows what
+ * a button does and costs. Buttons dim when their action isn't possible right now.
  */
 export class ActionPanel {
     private advanced: { button: Phaser.GameObjects.Container; spec: ButtonSpec }[] = [];
     private advancedFor: string | null = null;
     private readonly tooltip: Phaser.GameObjects.Text;
     private readonly basicButtons: Phaser.GameObjects.Container[];
+    /** Research progress bars and "done" ticks, drawn over the buttons. */
+    private readonly marks: Phaser.GameObjects.Graphics;
 
     constructor(private readonly scene: Phaser.Scene, private readonly layout: HudLayout, private readonly data: GameData, private readonly handlers: ActionHandlers) {
         const { basic, advanced, button, gap } = layout;
@@ -54,38 +63,88 @@ export class ActionPanel {
         this.basicButtons = BASIC.map((b, i) =>
             this.button(cells[i].x, cells[i].y, { texture: b.icon, tooltip: b.label, onClick: () => handlers.basic(b.action) }),
         );
+        this.marks = scene.add.graphics().setDepth(1);
     }
 
-    /** `unit` is the first selected unit of the local player, if any. */
-    update(unit: SimUnit | undefined, player: PlayerState, color: number): void {
+    /** `selected` are the local player's selected units; the first decides the advanced actions. */
+    update(selected: SimUnit[], player: PlayerState, color: number): void {
+        const unit = selected[0];
         for (const b of this.basicButtons) b.setVisible(unit !== undefined);
-        const key = unit ? unit.defId : null;
-        if (key !== this.advancedFor) this.rebuild(unit, player.faction, color);
+        // Rebuild when the selected type changes, or when a research ends (new per-unit upgrades).
+        const key = unit ? `${unit.defId}|${player.researched.length}` : null;
+        if (key !== this.advancedFor) this.rebuild(unit, player, color);
         this.advancedFor = key;
-        const rules = this.data.rules;
+        this.marks.clear();
+        const size = this.layout.button;
         for (const { button, spec } of this.advanced) {
-            if (!spec.unitDefId) continue;
-            const def = this.data.requireUnit(spec.unitDefId);
-            const pop = rules.sizeClasses[def.sizeClass].population;
-            const ok = canAfford(player, def.cost) && player.population + pop <= rules.populationCap && player.queue.length < rules.productionQueueSize;
-            button.setAlpha(ok ? 1 : 0.4);
+            const state = this.state(spec, selected, player);
+            button.setAlpha(state === 'ready' ? 1 : 0.4);
+            if (state === 'done') {
+                // A tick in the corner.
+                this.marks.lineStyle(2, THEME.hpBar).beginPath();
+                this.marks.moveTo(button.x + size - 16, button.y + 9).lineTo(button.x + size - 11, button.y + 14).lineTo(button.x + size - 4, button.y + 5).strokePath();
+            } else if (state === 'researching' && player.research) {
+                const total = ticks(this.data.upgrade(player.research.upgradeId)!.researchTime);
+                const done = 1 - player.research.ticksLeft / total;
+                this.marks.fillStyle(THEME.hpBar).fillRect(button.x + 3, button.y + size - 6, (size - 6) * done, 3);
+            }
         }
     }
 
-    private rebuild(unit: SimUnit | undefined, faction: string, color: number): void {
+    /** Whether a button's action can be done now, is in progress, or is already done. */
+    private state(spec: ButtonSpec, selected: SimUnit[], player: PlayerState): 'ready' | 'blocked' | 'researching' | 'done' {
+        const rules = this.data.rules;
+        switch (spec.kind) {
+            case 'recruit': {
+                const def = this.data.requireUnit(spec.id!);
+                const pop = rules.sizeClasses[def.sizeClass].population;
+                const ok = canAfford(player, def.cost) && player.population + pop <= rules.populationCap && player.queue.length < rules.productionQueueSize;
+                return ok ? 'ready' : 'blocked';
+            }
+            case 'research': {
+                const up = this.data.upgrade(spec.id!)!;
+                if (player.researched.includes(up.id)) return 'done';
+                if (player.research?.upgradeId === up.id) return 'researching';
+                return !player.research && canAfford(player, up.cost) ? 'ready' : 'blocked';
+            }
+            case 'apply': {
+                const up = this.data.upgrade(spec.id!)!;
+                const targets = selected.filter((u) => u.defId === up.appliesTo);
+                if (targets.every((u) => u.upgrades.includes(up.id))) return 'done';
+                return canAfford(player, up.applyCost ?? {}) ? 'ready' : 'blocked';
+            }
+            default:
+                return 'ready';
+        }
+    }
+
+    private rebuild(unit: SimUnit | undefined, player: PlayerState, color: number): void {
         for (const { button } of this.advanced) button.destroy();
         this.advanced = [];
-        if (!unit?.isHq) return;
+        if (!unit) return;
 
         const specs: ButtonSpec[] = [];
-        const f = this.data.faction(faction)!;
-        for (const id of f.units) {
-            const def = this.data.requireUnit(id);
-            specs.push({ texture: id, unitDefId: id, tooltip: `Recruit ${def.displayName}: ${costText(def.cost)}, ${def.recruitTime} s`, onClick: () => this.handlers.recruit(id) });
-        }
-        for (const id of f.upgrades) {
-            const up = this.data.upgrade(id)!;
-            specs.push({ label: up.displayName, tooltip: `Research ${up.displayName}: ${up.description} ${costText(up.cost)}, ${up.researchTime} s`, onClick: () => this.handlers.research(id) });
+        const f = this.data.faction(player.faction)!;
+        if (unit.isHq) {
+            for (const id of f.units) {
+                const def = this.data.requireUnit(id);
+                const tooltip = `Recruit ${def.displayName}: ${costText(def.cost)}, ${def.recruitTime} s`;
+                specs.push({ texture: id, kind: 'recruit', id, tooltip, onClick: () => this.handlers.recruit(id) });
+            }
+            for (const id of f.upgrades) {
+                const up = this.data.upgrade(id)!;
+                const tooltip = `Research ${up.displayName}: ${up.description} ${costText(up.cost)}, ${up.researchTime} s`;
+                specs.push({ label: up.displayName, kind: 'research', id, tooltip, onClick: () => this.handlers.research(id) });
+            }
+        } else {
+            // Researched upgrades that are applied to units of this type one by one.
+            for (const id of player.researched) {
+                const up = this.data.upgrade(id)!;
+                if (isAutomatic(up) || up.appliesTo !== unit.defId) continue;
+                const name = this.data.requireUnit(up.appliesTo).displayName;
+                const tooltip = `Apply ${up.displayName} to the selected ${name}s: ${up.description} ${costText(up.applyCost ?? {})} each`;
+                specs.push({ label: up.displayName, kind: 'apply', id, tooltip, onClick: () => this.handlers.apply(id) });
+            }
         }
         const { advanced, button, gap } = this.layout;
         const cells = buttonGrid(advanced, 6, 2, button, gap);

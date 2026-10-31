@@ -10,6 +10,7 @@ import { clamp, idiv, type Vec } from './math';
 import { stepMovement } from './movement';
 import { giveOrder, stepOrders } from './orders';
 import { cancelRecruit, recruit, stepProduction } from './production';
+import { applyUpgrade, refreshStats, research, stepResearch } from './upgrades';
 import { SimRng } from './rng';
 import type { PlayerState, SimProjectile, SimReqPoint, SimReserve } from './state';
 import { stepCombat } from './combat';
@@ -86,6 +87,8 @@ export class SimWorld {
         const stats = this.unitStatsOf(defId);
         const unit = createUnit(this.nextId++, playerId, defId, def.isHq, def.sizeClass, stats, at, heading);
         this.units.set(unit.id, unit);
+        // Upgrades the player has already researched apply to new units too.
+        refreshStats(this, unit);
         const player = this.players.get(playerId);
         if (player && countPopulation) player.population += stats.population;
         return unit;
@@ -162,6 +165,7 @@ export class SimWorld {
         this.applyCommands();
         stepEconomy(this);
         stepProduction(this);
+        stepResearch(this);
         stepCapture(this);
         stepVisibility(this);
         const units = [...this.units.values()];
@@ -180,11 +184,12 @@ export class SimWorld {
         for (const p of this.players.values()) {
             for (const r of this.data.rules.resources) h = mix(mix(h, p.resources[r] ?? 0), p.carry[r] ?? 0);
             for (const e of p.queue) h = mix(h, e.ticksLeft);
-            for (const v of [p.id, p.population, p.queue.length, p.researched.length, p.defeated ? 1 : 0]) h = mix(h, v);
+            for (const v of [p.id, p.population, p.queue.length, p.researched.length, p.research?.ticksLeft ?? -1, p.defeated ? 1 : 0]) h = mix(h, v);
         }
         for (const u of this.units.values()) {
             for (const v of [u.id, u.playerId, u.position.x, u.position.y, u.heading, u.speedFx, u.health, u.orders.length, u.extractCarry]) h = mix(h, v);
             for (const w of u.weapons) h = mix(mix(h, w.mountAngle), w.cooldown);
+            h = mix(mix(h, u.upgrades.length), u.stats.armour.front);
             for (const r of Object.keys(u.load).sort()) h = mix(h, u.load[r]);
         }
         for (const p of this.projectiles.values()) {
@@ -228,7 +233,12 @@ export class SimWorld {
                 case 'cancelRecruit':
                     cancelRecruit(this, command);
                     break;
-                // research and applyUpgrade are accepted but have no effect until M6.
+                case 'research':
+                    research(this, command);
+                    break;
+                case 'applyUpgrade':
+                    applyUpgrade(this, command);
+                    break;
             }
         }
     }
