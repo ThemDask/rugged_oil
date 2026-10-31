@@ -1,6 +1,55 @@
 {
   "type": "rules",
-  "resourceTypes": ["workforce", "fuel", "metal"],
-  "startingResources": { "workforce": 20, "fuel": 300, "metal": 0 },
-  "supplyCap": 200
+  "resources": [
+    "manpower",
+    "oil",
+    "metal"
+  ],
+  "startingResources": {
+    "manpower": 500,
+    "oil": 0,
+    "metal": 0
+  },
+  "baseIncome": {
+    "manpower": 10
+  },
+  "populationCap": 100,
+  "productionQueueSize": 5,
+  "capture": {
+    "captureTime": 30,
+    "decayTime": 10,
+    "areaSize": 40,
+    "incomePerPoint": 10
+  },
+  "reserveAmount": {
+    "oil": 100,
+    "metal": 150
+  },
+  "aiIncomeBonusPercent": 25,
+  "sizeClasses": {
+    "light": {
+      "length": 8,
+      "width": 4,
+      "population": 1,
+      "captureWeight": 1
+    },
+    "medium": {
+      "length": 12,
+      "width": 6,
+      "population": 2,
+      "captureWeight": 2
+    },
+    "heavy": {
+      "length": 16,
+      "width": 8,
+      "population": 5,
+      "captureWeight": 5
+    },
+    "hq": {
+      "length": 40,
+      "width": 24,
+      "population": 0,
+      "captureWeight": 5
+    }
+  }
 }

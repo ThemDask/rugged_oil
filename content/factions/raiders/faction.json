@@ -1,0 +1,20 @@
+{
+  "type": "faction",
+  "id": "raiders",
+  "displayName": "The Raiders",
+  "description": "Fast, cheap and many: wheeled vehicles and primitive weapons.",
+  "color": "#e04030",
+  "hq": "raiders_ravager",
+  "units": [
+    "raiders_spotter",
+    "raiders_hunter",
+    "raiders_raider",
+    "raiders_gatherer",
+    "raiders_destroyer"
+  ],
+  "upgrades": [
+    "raiders_tactical_gatherer",
+    "raiders_combat_raider",
+    "raiders_faster_faster"
+  ]
+}

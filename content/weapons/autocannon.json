@@ -1,0 +1,11 @@
+{
+  "type": "weapon",
+  "id": "autocannon",
+  "displayName": "Autocannon",
+  "range": 150,
+  "rateOfFire": 2,
+  "damage": 50,
+  "piercing": 5,
+  "projectileSpeed": 100,
+  "maxProjectileDistance": 200
+}

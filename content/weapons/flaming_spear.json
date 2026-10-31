@@ -1,0 +1,11 @@
+{
+  "type": "weapon",
+  "id": "flaming_spear",
+  "displayName": "Flaming spear",
+  "range": 75,
+  "rateOfFire": 0.5,
+  "damage": 250,
+  "piercing": 50,
+  "projectileSpeed": 100,
+  "maxProjectileDistance": 125
+}

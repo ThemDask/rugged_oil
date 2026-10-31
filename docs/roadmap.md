@@ -1,61 +1,68 @@
 # Roadmap: Rugged Oil
 
-Ordered by dependency. Each milestone ends playable or testable. **Current scope = M2–M6 for one
-faction:** a full 1v1 match from main menu to destroying the enemy base vehicle, all built on the
-deterministic simulation.
+Milestones are split by game system, not by faction: stats are data, so both factions' data goes
+in early, and each milestone adds one system and ends with something playable. Rules, names and
+numbers come from `high-level-design.md` (HLD); how they're built is in `low-level-design.md`
+(LLD).
 
-## M0: Foundation ✅ (Phaser + TypeScript, see ADR 0006)
-- [x] Repo layout, CLAUDE.md, docs, git, Vite, Vitest
-- [x] Content types, GameData registry, content validator, MatchConfig/PlayerSlot
+## M1: Foundation and data ✅
+- [x] Restructure `src/` to the LLD layout; empty sim system files (orders, visibility, combat,
+      projectiles, economy, capture, production, upgrades) wired into `step()` in LLD order
+- [x] Content format: weapons, mounts, upgrades, unit weapon slots, maps with requisition points
+      and reserves; `convert.ts` turns HLD units (metres, seconds, degrees) into sim units
+- [x] All HLD appendix data for **both factions** as JSON (`league_`, `raiders_` ids), checked by
+      the validator; HLD naming everywhere (manpower, oil, metal, HQ, extractor)
+- [x] Test map: 256 × 256 tiles, obstacles, spawns, 6–8 requisition points, oil and metal reserves
+- **Done when:** tests pass, the validator accepts all HLD data, determinism test green.
 
-## M1 + M1.5: Deterministic simulation and movement ✅
-See `decisions/0005-deterministic-lockstep.md`.
-- [x] `src/sim/`: SimWorld with fixed tick (20/s), integer sim units, seeded RNG, checksum
-- [x] Commands scheduled per tick, applied in a fixed order, validated by the simulation
-- [x] Map as a tile grid with clearance; grid A* (size-aware) with path smoothing
-- [x] Vehicle movement: turn rate, acceleration, pivot in place, braking; unit separation
-- [x] Views interpolate between ticks; RTS camera; click/box selection; move orders
-- [x] Determinism test and architecture test
+## M2: Menus, HUD and match shell
+- [ ] Main menu (Play, Army viewer, Settings, Exit) and match setup (map, own faction, enemy
+      faction, Start)
+- [ ] Match: map background, obstacles, both HQs spawned; camera (WASD, screen edges, zoom)
+- [ ] `HudScene` with the HLD layout (top bar, unit inspector, action grids, minimap) in the thin
+      light-blue style, static values for now
+- [ ] Esc menu (pauses, Esc again closes) and the victory/defeat screen in place
+- **Done when:** menu → match setup → a match with both HQs and the full HUD layout.
 
-## M2: Game flow and menus (boilerplate done)
-- [x] Main menu: Play, Settings, Exit (`MainMenuScene`)
-- [x] Create-match screen: map + faction choice, opponent always AI (`MatchSetupScene`)
-- [x] Settings modal: Audio, Video, Input (`ui/SettingsDialog`), saved in localStorage
-- [x] Esc modal in matches with Exit, back to main menu (`ui/PauseMenu`, `HudScene`)
-- [x] Desert placeholder look for the test map
-- [ ] Settings content (the HLD's Settings buttons do nothing for now); audio buses once
-      there is audio; key rebinding if wanted
+## M3: Control and movement
+- [ ] Selection (click, box, Shift), control groups, move, stop, Shift-queued orders
+- [ ] Movement at the new scale; separation by size class
+- [ ] Order indicator lines, selection rectangles, live unit inspector, minimap dots and
+      click-to-move-camera
+- **Done when:** the HQ and debug-spawned units drive around the map comfortably.
 
-## M3: Base vehicle
-- [x] Each player starts with exactly one base vehicle at their spawn (no buildings in the game)
-- [x] Base vehicle in the simulation: big, slow, selectable, health (placeholder stats)
-- [ ] Losing your base vehicle = defeat (detection in place, win/lose screen in M6)
+## M4: Economy and production
+- [ ] Player state: manpower, oil, metal, population
+- [ ] Manpower income; requisition capture (weights, neutralise, contested, decay)
+- [ ] Reserves and extraction: League hauling with max loads, Raiders gathering on the spot
+- [ ] Production: recruit buttons, pay at queue time, queue of 5, cancel with refund, population
+      cap, spawn in a free spot; live top bar
+- **Done when:** the economy loop (capture, extract, recruit) is playable with both factions.
 
-## M4: Economy (fuel, workforce, metal)
-- [ ] Per-player resource stock in the simulation, starting resources from GameRules
-- [ ] Resource sites on maps (fuel, metal) and gathering without buildings (rules TBD, Q3–4)
-- [ ] HUD resource bar
+## M5: Combat and fog of war
+- [ ] Weapons on mounts with arcs, leading shots, projectiles as sim entities, piercing/armour
+      damage, front/side/rear facings
+- [ ] Auto-targeting, attack, attack-move, hold fire, turning rules
+- [ ] Fog of war with line of sight (sim), feeding targeting, the fog layer and the minimap
+- [ ] Death; an HQ dying ends the match with the victory/defeat screen
+- **Done when:** a full match is playable (debug control of both sides, or a passive enemy).
 
-## M5: Production and upgrades
-- [ ] Base vehicle trains units via a `train` Command, with a production queue
-- [ ] Base vehicle upgrades via an `upgrade` Command (costs, requirements, tiers TBD: Q6, Q9)
-- [ ] HUD: selection panel and command buttons
+## M6: Upgrades
+- [ ] Research at the HQ (1 minute), per-unit application with apply cost, automatic upgrades
+- [ ] The 4 effect types (add armour, add stat, add weapon, replace weapon); inspector shows
+      upgraded stats
+- **Done when:** all 6 HLD upgrades work.
 
-## M6: Combat and victory
-- [ ] `attack` Command, auto-targeting, weapons from unit data, damage and armor, death
-- [ ] Base vehicle destroyed means defeat. Win/lose screen, back to menu.
-- [ ] AI v1: gathers, trains, upgrades and attacks with the same Commands as the player (`src/ai/`)
+## M7: AI opponent
+- [ ] One difficulty, +25% income
+- [ ] Recruits extractors and gathers, captures points, builds an army, attacks the HQ
+- [ ] AI-vs-AI smoke test
+- **Done when:** a full match against the AI can be won and lost.
 
-## M7: The hook: vehicles
-- [ ] Vehicle modification and upgrades (question 6)
+## M8: Polish
+- [ ] Real art (units, map background, obstacles), exhaust smoke, muzzle flashes, hit effects,
+      sound
+- [ ] Balance pass, bug fixing, settings content, Electron desktop build
 
-## M8: Second faction
-- [ ] Asymmetric mechanics, roster, AI support
-
-## M9: Content and polish
-- [ ] More maps, balance pass, audio, effects, real art, Electron desktop build
-
-## M10: Multiplayer (much later)
-- [ ] Node relay server (`server/`), turn batching (~150 ms) with a 2-turn input delay
-- [ ] Desync detection via checksums, lobby, reconnect/drop handling
-- [ ] AI in multiplayer: deterministic AI or host-run AI
+## Later
+- Multiplayer (deterministic lockstep through a relay server), Army viewer, more maps

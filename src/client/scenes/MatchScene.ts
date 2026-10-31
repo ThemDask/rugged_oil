@@ -38,8 +38,8 @@ export class MatchScene extends Phaser.Scene {
 
     init(data: { config?: MatchConfig }): void {
         // Without a config (e.g. starting this scene directly while developing), play a dev match.
-        const faction = gameData.factions()[0].id;
-        this.config = data.config ?? createSkirmish(gameData.maps()[0].id, faction, faction, 1);
+        const factions = gameData.factions();
+        this.config = data.config ?? createSkirmish(gameData.maps()[0].id, factions[0].id, factions[factions.length - 1].id, 1, gameData.rules.aiIncomeBonusPercent);
         this.views.clear();
         this.accumulator = 0;
         this.paused = false;
@@ -61,7 +61,7 @@ export class MatchScene extends Phaser.Scene {
         }
         this.selection = new Selection(this, humanId, this.views, this.bridge);
 
-        const base = [...this.world.units.values()].find((u) => u.playerId === humanId && u.isBase);
+        const base = [...this.world.units.values()].find((u) => u.playerId === humanId && u.isHq);
         if (base) {
             const at = simToPx(base.position);
             this.camera.centerOn(at.x, at.y);

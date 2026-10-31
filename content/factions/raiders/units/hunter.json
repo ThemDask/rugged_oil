@@ -1,0 +1,31 @@
+{
+  "type": "unit",
+  "id": "raiders_hunter",
+  "faction": "raiders",
+  "displayName": "Hunter",
+  "role": "Light combat vehicle (bike)",
+  "isHq": false,
+  "sizeClass": "light",
+  "armour": {
+    "front": 10,
+    "side": 10,
+    "rear": 10
+  },
+  "health": 1000,
+  "spottingRange": 200,
+  "topSpeed": 45,
+  "acceleration": 2,
+  "rotationSpeed": 45,
+  "cost": {
+    "manpower": 250,
+    "oil": 5,
+    "metal": 5
+  },
+  "recruitTime": 10,
+  "weapons": [
+    {
+      "weapon": "twin_autocannon",
+      "mount": "pintle"
+    }
+  ]
+}

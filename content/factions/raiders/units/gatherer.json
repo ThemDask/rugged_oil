@@ -1,0 +1,38 @@
+{
+  "type": "unit",
+  "id": "raiders_gatherer",
+  "faction": "raiders",
+  "displayName": "Gatherer",
+  "role": "Extractor",
+  "isHq": false,
+  "sizeClass": "medium",
+  "armour": {
+    "front": 10,
+    "side": 10,
+    "rear": 10
+  },
+  "health": 2500,
+  "spottingRange": 200,
+  "topSpeed": 20,
+  "acceleration": 2,
+  "rotationSpeed": 30,
+  "cost": {
+    "manpower": 250,
+    "oil": 0,
+    "metal": 0
+  },
+  "recruitTime": 15,
+  "weapons": [
+    {
+      "weapon": "autocannon",
+      "mount": "turret"
+    }
+  ],
+  "extraction": {
+    "mode": "onSpot",
+    "ratePerMinute": {
+      "oil": 10,
+      "metal": 20
+    }
+  }
+}

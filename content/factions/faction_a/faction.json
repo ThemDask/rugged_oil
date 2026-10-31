@@ -1,8 +1,0 @@
-{
-  "type": "faction",
-  "id": "faction_a",
-  "displayName": "Faction A",
-  "description": "The sturdy, slow faction (name TBD). Placeholder content.",
-  "color": "#4080ff",
-  "startingUnits": ["a_base"]
-}

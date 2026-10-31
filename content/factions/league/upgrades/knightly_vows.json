@@ -1,0 +1,23 @@
+{
+  "type": "upgrade",
+  "id": "league_knightly_vows",
+  "faction": "league",
+  "displayName": "Knightly Vows",
+  "description": "Replaces the Peacemaker with a Pacifier.",
+  "appliesTo": "league_knight",
+  "cost": {
+    "manpower": 300,
+    "oil": 10,
+    "metal": 20
+  },
+  "researchTime": 60,
+  "apply": "perUnit",
+  "applyCost": {},
+  "effects": [
+    {
+      "type": "replaceWeapon",
+      "from": "peacemaker",
+      "to": "pacifier"
+    }
+  ]
+}

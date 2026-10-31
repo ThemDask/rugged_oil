@@ -1,0 +1,26 @@
+{
+  "type": "unit",
+  "id": "raiders_spotter",
+  "faction": "raiders",
+  "displayName": "Spotter",
+  "role": "Scout",
+  "isHq": false,
+  "sizeClass": "light",
+  "armour": {
+    "front": 0,
+    "side": 0,
+    "rear": 0
+  },
+  "health": 500,
+  "spottingRange": 300,
+  "topSpeed": 45,
+  "acceleration": 3,
+  "rotationSpeed": 45,
+  "cost": {
+    "manpower": 50,
+    "oil": 0,
+    "metal": 0
+  },
+  "recruitTime": 5,
+  "weapons": []
+}

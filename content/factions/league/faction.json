@@ -1,0 +1,20 @@
+{
+  "type": "faction",
+  "id": "league",
+  "displayName": "The League",
+  "description": "Slow, heavily armoured and elite keepers of sacred tech.",
+  "color": "#4080ff",
+  "hq": "league_dreadnought",
+  "units": [
+    "league_sentinel",
+    "league_steward",
+    "league_knight",
+    "league_lifeline",
+    "league_retributor"
+  ],
+  "upgrades": [
+    "league_aggressive_recon",
+    "league_knightly_vows",
+    "league_brace"
+  ]
+}

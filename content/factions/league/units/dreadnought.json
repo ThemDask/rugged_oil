@@ -1,0 +1,31 @@
+{
+  "type": "unit",
+  "id": "league_dreadnought",
+  "faction": "league",
+  "displayName": "Dreadnought",
+  "role": "HQ",
+  "isHq": true,
+  "sizeClass": "hq",
+  "armour": {
+    "front": 80,
+    "side": 60,
+    "rear": 60
+  },
+  "health": 10000,
+  "spottingRange": 300,
+  "topSpeed": 15,
+  "acceleration": 1,
+  "rotationSpeed": 15,
+  "cost": {
+    "manpower": 0,
+    "oil": 0,
+    "metal": 0
+  },
+  "recruitTime": 0,
+  "weapons": [
+    {
+      "weapon": "autocannon",
+      "mount": "pintle"
+    }
+  ]
+}

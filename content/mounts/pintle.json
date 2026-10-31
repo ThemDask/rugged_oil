@@ -1,0 +1,7 @@
+{
+  "type": "mount",
+  "id": "pintle",
+  "displayName": "Pintle mount",
+  "arc": 90,
+  "rotationSpeed": 45
+}

@@ -1,0 +1,21 @@
+{
+  "type": "upgrade",
+  "id": "league_brace",
+  "faction": "league",
+  "displayName": "Brace",
+  "description": "All vehicles gain +10 armour on all sides.",
+  "appliesTo": "faction",
+  "cost": {
+    "manpower": 700,
+    "oil": 10,
+    "metal": 50
+  },
+  "researchTime": 60,
+  "apply": "automatic",
+  "effects": [
+    {
+      "type": "addArmour",
+      "amount": 10
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "type": "unit",
+  "id": "league_steward",
+  "faction": "league",
+  "displayName": "Steward",
+  "role": "Combat vehicle",
+  "isHq": false,
+  "sizeClass": "light",
+  "armour": {
+    "front": 20,
+    "side": 20,
+    "rear": 10
+  },
+  "health": 1250,
+  "spottingRange": 200,
+  "topSpeed": 30,
+  "acceleration": 3,
+  "rotationSpeed": 45,
+  "cost": {
+    "manpower": 250,
+    "oil": 15,
+    "metal": 5
+  },
+  "recruitTime": 10,
+  "weapons": [
+    {
+      "weapon": "autocannon",
+      "mount": "turret"
+    }
+  ]
+}

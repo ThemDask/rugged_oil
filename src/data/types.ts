@@ -1,17 +1,50 @@
 /**
  * Shapes of the static game data in content/*.json. Every file has a `type` field telling the
- * registry what it is. Distances are in tiles, speeds in tiles per second, times in seconds.
- * Cross-references use ids (globally unique, lower_snake_case, prefixed per faction).
+ * registry what it is. Values are in HLD units: metres, seconds, degrees, metres per second.
+ * src/data/convert.ts turns them into integer sim units. Cross-references use ids (globally
+ * unique, lower_snake_case, prefixed per faction: league_, raiders_).
  */
 
-export type ResourceCost = Record<string, number>;
+/** Resource id -> amount, e.g. { manpower: 300, oil: 20 }. Keys must be in GameRules.resources. */
+export type Resources = Record<string, number>;
+
+export type SizeClass = 'light' | 'medium' | 'heavy' | 'hq';
+export const SIZE_CLASSES: SizeClass[] = ['light', 'medium', 'heavy', 'hq'];
+
+export interface SizeClassDef {
+    /** Default footprint in metres, seen from above, facing right. */
+    length: number;
+    width: number;
+    /** Population used (the HQ uses 0). */
+    population: number;
+    /** Weight when capturing requisition points. */
+    captureWeight: number;
+}
 
 export interface GameRules {
     type: 'rules';
-    /** Every resource a cost may use, e.g. ["workforce", "fuel", "metal"]. */
-    resourceTypes: string[];
-    startingResources: ResourceCost;
-    supplyCap: number;
+    /** Every resource a cost may use, in HUD order: ["manpower", "oil", "metal"]. */
+    resources: string[];
+    startingResources: Resources;
+    /** Background income per second, before requisition points. */
+    baseIncome: Resources;
+    populationCap: number;
+    productionQueueSize: number;
+    capture: {
+        /** Seconds to capture (and to neutralise) a point at weight 1. */
+        captureTime: number;
+        /** Seconds progress decays after the capturers leave, before it drops to zero. */
+        decayTime: number;
+        /** Side of the square capture area, metres. */
+        areaSize: number;
+        /** Manpower per second for each held point. */
+        incomePerPoint: number;
+    };
+    /** Amount in each reserve of a resource, e.g. { oil: 100, metal: 150 }. */
+    reserveAmount: Resources;
+    /** AI cheat: extra percent on all its resource income. */
+    aiIncomeBonusPercent: number;
+    sizeClasses: Record<SizeClass, SizeClassDef>;
 }
 
 export interface FactionDef {
@@ -19,25 +52,62 @@ export interface FactionDef {
     id: string;
     displayName: string;
     description?: string;
-    /** Default player color, e.g. "#4080ff". */
+    /** Default team colour, e.g. "#4080ff". */
     color: string;
-    /** Unit ids spawned at match start. Must contain exactly one base vehicle. */
-    startingUnits: string[];
+    /** The faction's HQ unit id (exactly one, spawned at match start). */
+    hq: string;
+    /** Units the HQ can recruit, in recruit-button order. */
+    units: string[];
+    /** Upgrades researched at the HQ, in button order. */
+    upgrades: string[];
 }
 
 export interface WeaponDef {
+    type: 'weapon';
+    id: string;
     displayName: string;
-    damage: number;
-    /** Tiles. */
+    /** Metres. */
     range: number;
-    /** Seconds between shots. */
-    cooldown: number;
-    /** Tiles; 0 = single target. */
-    splashRadius?: number;
-    /** Tiles per second; 0 = instant hit. */
-    projectileSpeed?: number;
-    /** Target tag -> damage multiplier. */
-    bonusVsTags?: Record<string, number>;
+    /** Shots per second. */
+    rateOfFire: number;
+    damage: number;
+    /** Percent of the damage that ignores armour, 0-100. */
+    piercing: number;
+    /** Metres per second. */
+    projectileSpeed: number;
+    /** Metres a projectile flies before it disappears. */
+    maxProjectileDistance: number;
+}
+
+export interface MountDef {
+    type: 'mount';
+    id: string;
+    displayName: string;
+    /** Firing arc in degrees, centred on the hull's front (360 = all around). */
+    arc: number;
+    /** Degrees per second. */
+    rotationSpeed: number;
+}
+
+export interface WeaponSlot {
+    weapon: string;
+    mount: string;
+}
+
+export interface ArmourDef {
+    /** Percent of non-piercing damage blocked, 0-100, per side. */
+    front: number;
+    side: number;
+    rear: number;
+}
+
+export interface ExtractionDef {
+    /** 'haul': carry loads back to the HQ (League). 'onSpot': income arrives while gathering (Raiders). */
+    mode: 'haul' | 'onSpot';
+    /** Resource -> amount gathered per minute. */
+    ratePerMinute: Resources;
+    /** Resource -> max load carried ('haul' only). */
+    maxLoad?: Resources;
 }
 
 export interface UnitDef {
@@ -45,32 +115,59 @@ export interface UnitDef {
     id: string;
     faction: string;
     displayName: string;
-    description?: string;
-    /** Free-form labels for damage bonuses, AI and UI, e.g. "vehicle", "gatherer". */
-    tags: string[];
-    /** Resource type -> amount. Keys must be listed in GameRules.resourceTypes. */
-    cost: ResourceCost;
-    /** Seconds to produce. */
-    buildTime: number;
-    /** Ids that must exist before this can be produced. */
-    requires: string[];
-    maxHealth: number;
-    armor: number;
-    sightRange: number;
-    weapons: WeaponDef[];
-    /** The player's base vehicle: produces units, does upgrades; losing it loses the match. */
-    isBase: boolean;
-    /** Unit ids this unit can produce (base vehicles only, same faction). */
-    produces: string[];
-    /** Top speed, tiles per second. */
-    moveSpeed: number;
-    /** Tiles per second gained per second. */
+    /** The HLD's "Type" column, e.g. "Medium tank", "extractor". Shown in the UI. */
+    role: string;
+    isHq: boolean;
+    sizeClass: SizeClass;
+    /** Overrides the size class footprint, metres. */
+    size?: { length: number; width: number };
+    armour: ArmourDef;
+    health: number;
+    /** Metres. */
+    spottingRange: number;
+    /** Metres per second. */
+    topSpeed: number;
+    /** Metres per second per second. */
     acceleration: number;
-    /** Degrees per second. */
-    turnRate: number;
-    /** Body size in tiles: pathing clearance, separation, selection. */
-    radius: number;
-    supply: number;
+    /** Hull rotation, degrees per second. */
+    rotationSpeed: number;
+    cost: Resources;
+    /** Seconds. */
+    recruitTime: number;
+    weapons: WeaponSlot[];
+    /** Only for extractors. */
+    extraction?: ExtractionDef;
+}
+
+export type UpgradeEffect =
+    | { type: 'addArmour'; amount: number }
+    | { type: 'addStat'; stat: 'topSpeed' | 'acceleration'; amount: number }
+    | { type: 'addWeapon'; slot: WeaponSlot }
+    | { type: 'replaceWeapon'; from: string; to: string };
+
+export interface UpgradeDef {
+    type: 'upgrade';
+    id: string;
+    faction: string;
+    displayName: string;
+    description: string;
+    /** 'faction' for faction-wide upgrades, otherwise a unit id of the same faction. */
+    appliesTo: string;
+    cost: Resources;
+    /** Seconds. */
+    researchTime: number;
+    /** 'automatic': active for all current and future units once researched. Otherwise applied per unit for `applyCost`. */
+    apply: 'automatic' | 'perUnit';
+    applyCost?: Resources;
+    effects: UpgradeEffect[];
+}
+
+/** A tile rectangle. */
+export interface TileRect {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
 }
 
 export interface MapDef {
@@ -79,17 +176,21 @@ export interface MapDef {
     displayName: string;
     description?: string;
     maxPlayers: number;
-    /** Map size in tiles. */
+    /** Map size in tiles (1 tile = 10 m). */
     width: number;
     height: number;
-    /** Ground color until a background image exists, e.g. "#b8945f". */
+    /** Ground colour until a background image exists, e.g. "#c8955a". */
     groundColor: string;
     /** Optional background image (asset key), stretched over the whole map. */
     background?: string;
-    /** Solid areas in tiles. They block movement and pathing. */
-    obstacles: { x: number; y: number; w: number; h: number }[];
-    /** Start tiles, one per player slot. */
+    /** Solid areas in tiles. They block movement, vision and shots. */
+    obstacles: (TileRect & { sprite?: string })[];
+    /** HQ start tiles, one per player slot. */
     spawns: { x: number; y: number }[];
+    /** Requisition point tiles. */
+    requisitionPoints: { x: number; y: number }[];
+    /** Oil and metal reserves. The amount comes from GameRules.reserveAmount. */
+    reserves: { x: number; y: number; resource: string }[];
 }
 
-export type ContentDef = GameRules | FactionDef | UnitDef | MapDef;
+export type ContentDef = GameRules | FactionDef | UnitDef | WeaponDef | MountDef | UpgradeDef | MapDef;

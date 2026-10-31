@@ -1,0 +1,7 @@
+{
+  "type": "mount",
+  "id": "armoured",
+  "displayName": "Armoured mount",
+  "arc": 30,
+  "rotationSpeed": 30
+}

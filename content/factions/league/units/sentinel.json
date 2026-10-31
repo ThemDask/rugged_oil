@@ -1,0 +1,26 @@
+{
+  "type": "unit",
+  "id": "league_sentinel",
+  "faction": "league",
+  "displayName": "Sentinel",
+  "role": "Scout",
+  "isHq": false,
+  "sizeClass": "light",
+  "armour": {
+    "front": 20,
+    "side": 10,
+    "rear": 10
+  },
+  "health": 750,
+  "spottingRange": 300,
+  "topSpeed": 40,
+  "acceleration": 3,
+  "rotationSpeed": 45,
+  "cost": {
+    "manpower": 100,
+    "oil": 0,
+    "metal": 0
+  },
+  "recruitTime": 5,
+  "weapons": []
+}

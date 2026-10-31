@@ -329,6 +329,20 @@ Raiders Upgrades (upgrades take 1 minute to research):
 | Combat Raider | Raider | Raider gains +10 armour on all fronts | 300 | 0 | 20 | Applies automatically to all (newly recruited ones as well) |
 | Faster, Faster! | Faction wide | All vehicles gain +10 top speed and + 0.5 acceleration | 700 | 30 | 20 | Applies automatically to all (newly recruited ones as well) |
 
+### Unit sizes
+
+Default size per size class, seen from above, facing right (1 tile = 10 m = 32 px). A unit may
+override its class size later.
+
+| Size class | Length × width | On screen (100% zoom) | Sprite size (drawn at 2×) | Units |
+|---|---|---|---|---|
+| Light | 8 × 4 m | 26 × 13 px | 52 × 26 px | Sentinel, Steward, Spotter, Hunter |
+| Medium | 12 × 6 m | 38 × 19 px | 76 × 38 px | Knight, Lifeline, Raider, Gatherer |
+| Heavy | 16 × 8 m | 51 × 26 px | 102 × 52 px | Retributor, Destroyer |
+| HQ | 40 × 24 m | 128 × 77 px | 256 × 154 px | Dreadnought, Ravager |
+
+Map gaps must be at least 3 tiles wide for HQs to pass.
+
 ### Weapons & mountings
 
 Weapons:

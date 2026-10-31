@@ -1,0 +1,11 @@
+{
+  "type": "weapon",
+  "id": "pacifier",
+  "displayName": "Pacifier",
+  "range": 100,
+  "rateOfFire": 0.5,
+  "damage": 200,
+  "piercing": 30,
+  "projectileSpeed": 75,
+  "maxProjectileDistance": 100
+}

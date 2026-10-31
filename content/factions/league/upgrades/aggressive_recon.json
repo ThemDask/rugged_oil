@@ -1,0 +1,27 @@
+{
+  "type": "upgrade",
+  "id": "league_aggressive_recon",
+  "faction": "league",
+  "displayName": "Aggressive recon",
+  "description": "Adds an autocannon to the Sentinel.",
+  "appliesTo": "league_sentinel",
+  "cost": {
+    "manpower": 200,
+    "oil": 0,
+    "metal": 10
+  },
+  "researchTime": 60,
+  "apply": "perUnit",
+  "applyCost": {
+    "manpower": 25
+  },
+  "effects": [
+    {
+      "type": "addWeapon",
+      "slot": {
+        "weapon": "autocannon",
+        "mount": "turret"
+      }
+    }
+  ]
+}

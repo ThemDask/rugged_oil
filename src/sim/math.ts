@@ -10,7 +10,9 @@
  * sin/cos return fixed-point values where ONE means 1.0.
  */
 
+/** 1 tile = 10 m = 1000 sim units. */
 export const UNITS_PER_TILE = 1000;
+export const UNITS_PER_METRE = 100;
 export const ANGLE_STEPS = 4096;
 export const HALF_TURN = 2048;
 export const QUARTER_TURN = 1024;

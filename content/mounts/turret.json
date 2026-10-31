@@ -1,0 +1,7 @@
+{
+  "type": "mount",
+  "id": "turret",
+  "displayName": "Turret mount",
+  "arc": 360,
+  "rotationSpeed": 90
+}

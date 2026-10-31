@@ -10,15 +10,16 @@ import { createWorld } from '../src/sim/setup';
  * tick. Any change that breaks this would cause multiplayer desyncs.
  */
 const data = loadGameData();
-const faction = data.factions()[0].id;
-const config = createSkirmish('test_map', faction, faction, 12345);
+const config = createSkirmish('test_map', 'league', 'raiders', 12345, data.rules.aiIncomeBonusPercent);
+const [hq0, hq1] = [0, 1].map((p) => createWorld(config, data).hqOf(p)!.id);
 
-/** A scripted match: both base vehicles get several orders at different ticks. */
+/** A scripted match: both HQs get several orders at different ticks. */
 const script: Command[] = [
-    { type: 'move', playerId: 0, unitIds: [1], target: cellCenter({ x: 24, y: 30 }), tick: 5 },
-    { type: 'move', playerId: 1, unitIds: [2], target: cellCenter({ x: 40, y: 12 }), tick: 5 },
-    { type: 'move', playerId: 0, unitIds: [1, 2], target: cellCenter({ x: 50, y: 30 }), tick: 300 },
-    { type: 'move', playerId: 1, unitIds: [2], target: cellCenter({ x: 20, y: 20 }), tick: 450 },
+    { type: 'move', playerId: 0, unitIds: [hq0], target: cellCenter({ x: 60, y: 100 }), tick: 5 },
+    { type: 'move', playerId: 1, unitIds: [hq1], target: cellCenter({ x: 200, y: 150 }), tick: 5 },
+    { type: 'move', playerId: 0, unitIds: [hq0, hq1], target: cellCenter({ x: 90, y: 180 }), tick: 300 },
+    { type: 'stop', playerId: 1, unitIds: [hq1], tick: 400 },
+    { type: 'move', playerId: 1, unitIds: [hq1], target: cellCenter({ x: 170, y: 90 }), tick: 450 },
 ];
 
 function play(ticks: number): number[] {
@@ -42,7 +43,7 @@ describe('determinism', () => {
     it('a different command changes the outcome', () => {
         const world = createWorld(config, data);
         const before = world.checksum();
-        world.schedule({ type: 'move', playerId: 0, unitIds: [1], target: cellCenter({ x: 10, y: 10 }) });
+        world.schedule({ type: 'move', playerId: 0, unitIds: [hq0], target: cellCenter({ x: 40, y: 100 }) });
         for (let i = 0; i < 20; i++) world.step();
         const moved = world.checksum();
         const idle = createWorld(config, data);
@@ -51,10 +52,14 @@ describe('determinism', () => {
         expect(before).not.toBe(moved);
     });
 
-    it('starts each player with exactly one base vehicle on their spawn', () => {
+    it('starts each player with their HQ on their spawn, the map objects and starting resources', () => {
         const world = createWorld(config, data);
-        const bases = [...world.units.values()].filter((u) => u.isBase);
-        expect(bases.map((u) => u.playerId)).toEqual([0, 1]);
-        expect(bases[0].position).toEqual(cellCenter(data.map('test_map')!.spawns[0]));
+        const hqs = [...world.units.values()].filter((u) => u.isHq);
+        expect(hqs.map((u) => [u.playerId, u.defId])).toEqual([[0, 'league_dreadnought'], [1, 'raiders_ravager']]);
+        expect(hqs[0].position).toEqual(cellCenter(data.map('test_map')!.spawns[0]));
+        expect(world.reqPoints.size).toBe(8);
+        expect(world.reserves.size).toBe(8);
+        expect(world.players.get(0)!.resources).toEqual({ manpower: 500, oil: 0, metal: 0 });
+        expect(world.players.get(1)!.incomeBonusPercent).toBe(25);
     });
 });

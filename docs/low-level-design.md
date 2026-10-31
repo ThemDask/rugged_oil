@@ -63,7 +63,7 @@ Enforced by `tests/architecture.test.ts` where possible.
 | No `Math.sin/cos/atan2/sqrt/pow/random` | Not guaranteed identical everywhere | `sim/math.ts`: `sinFx`, `cosFx`, `atan2Steps`, `isqrt` |
 | No `Math.random` | Different on each machine | `world.rng` (seeded mulberry32) |
 | No `Date`, `performance.now`, frame `delta` | Time differs per machine | The tick counter |
-| Divide with `idiv(a, b)` | `/` gives floats | Integer division, rounds toward −∞ |
+| Divide with `idiv(a, b)` | `/` gives floats | Integer division, truncates toward 0 (like C) |
 | Iterate entities in ascending id | Order affects outcomes | Maps in insertion (= id) order; sort anything from a Set or object keys |
 | State is plain data | Easy to hash, copy, save | Interfaces + Maps, no classes hiding state |
 | Never remove entities mid-loop | Removing while iterating changes the order | Mark as dead, remove at the end of the tick |
@@ -220,6 +220,14 @@ A 256 × 256 grid is 65 536 tiles, which A* handles fine for orders given by pla
 - **Separation:** overlapping units push each other apart. A unit can't push a bigger size class
   (light < medium < heavy < HQ).
 
+**Unit sizes** (HLD appendix, "Unit sizes"): each size class has a default length × width in
+metres; a unit's JSON may override it. The code uses them three ways:
+- **Movement and separation:** a circle with radius = (length + width) ÷ 4 (light 3 m, medium
+  4.5 m, heavy 6 m, HQ 16 m).
+- **Pathfinding clearance:** the unit's width, rounded up to whole tiles.
+- **Projectile hits:** the real rotated rectangle, so a long vehicle hit from the side is a bigger
+  target than from the front.
+
 **Group moves** spread units into a formation block around the target (`sim/formation.ts`).
 
 **Spawning** a recruited unit: try the free spots around the HQ in a fixed order (behind, sides,
@@ -355,7 +363,8 @@ seconds, degrees), so the HLD appendix tables copy straight into it.
 ```
 content/
   rules.json                    resources, starting manpower, base income, population cap,
-                                capture times and weights, requisition income
+                                capture times and weights, requisition income,
+                                size classes (length, width, population, capture weight)
   weapons/*.json                WeaponDef: damage, piercing, range, rate of fire,
                                 projectile speed, max projectile distance
   mounts/*.json                 MountDef: arc, rotation speed
@@ -402,6 +411,10 @@ content/
 | `scale.ts` | `TILE_SIZE = 32` px and sim ↔ pixel conversion |
 | `settings.ts` | Player settings in `localStorage` |
 
+- **Placeholder art:** until the real 2D art arrives, every unit, projectile, reserve, requisition
+  point, obstacle and HUD symbol uses a code-drawn or simple placeholder with the **same texture
+  key, size and orientation (facing right = angle 0)** the real art will have. Swapping in the art
+  is then a file change in `public/assets/` and `BootScene.preload()`, with no other code changes.
 - **Scale:** 1 tile = 10 m = 32 px. This is visual only. Changing it never changes gameplay.
 - **The HUD is its own Phaser scene** (`HudScene`), running on top of the Match scene with its own
   camera, so the match zoom never scales it. Its parts (top bar, inspector, action grids) are
@@ -455,7 +468,9 @@ Boot ──► MainMenu ──► MatchSetup ──► Match (+ HudScene)
 Suggested sim files as the game grows: `world.ts`, `commands.ts`, `grid.ts`, `movement.ts`,
 `formation.ts`, `orders.ts`, `visibility.ts`, `combat.ts`, `projectiles.ts`, `economy.ts`,
 `capture.ts`, `production.ts`, `upgrades.ts`, `math.ts`, `rng.ts`. Each is a set of functions
-over `SimWorld`, called by `step()` in the order of section 4.
+over `SimWorld`, called by `step()` in the order of section 4. Until a system is implemented,
+its empty step function lives in `sim/systems.ts`; it moves to its own file when its milestone
+builds it.
 
 ---
 

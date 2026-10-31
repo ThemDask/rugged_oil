@@ -1,0 +1,35 @@
+{
+  "type": "unit",
+  "id": "raiders_destroyer",
+  "faction": "raiders",
+  "displayName": "Destroyer",
+  "role": "Heavy combat vehicle",
+  "isHq": false,
+  "sizeClass": "heavy",
+  "armour": {
+    "front": 50,
+    "side": 50,
+    "rear": 50
+  },
+  "health": 3000,
+  "spottingRange": 200,
+  "topSpeed": 30,
+  "acceleration": 2,
+  "rotationSpeed": 30,
+  "cost": {
+    "manpower": 700,
+    "oil": 50,
+    "metal": 100
+  },
+  "recruitTime": 30,
+  "weapons": [
+    {
+      "weapon": "harpoon",
+      "mount": "pintle"
+    },
+    {
+      "weapon": "flaming_spear",
+      "mount": "turret"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "type": "upgrade",
+  "id": "raiders_tactical_gatherer",
+  "faction": "raiders",
+  "displayName": "Tactical gatherer",
+  "description": "Replaces the Autocannon with a Twin autocannon.",
+  "appliesTo": "raiders_gatherer",
+  "cost": {
+    "manpower": 300,
+    "oil": 0,
+    "metal": 0
+  },
+  "researchTime": 60,
+  "apply": "automatic",
+  "effects": [
+    {
+      "type": "replaceWeapon",
+      "from": "autocannon",
+      "to": "twin_autocannon"
+    }
+  ]
+}

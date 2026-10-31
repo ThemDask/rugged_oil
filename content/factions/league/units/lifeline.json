@@ -1,0 +1,42 @@
+{
+  "type": "unit",
+  "id": "league_lifeline",
+  "faction": "league",
+  "displayName": "Lifeline",
+  "role": "Extractor",
+  "isHq": false,
+  "sizeClass": "medium",
+  "armour": {
+    "front": 20,
+    "side": 10,
+    "rear": 10
+  },
+  "health": 2500,
+  "spottingRange": 200,
+  "topSpeed": 20,
+  "acceleration": 1.5,
+  "rotationSpeed": 15,
+  "cost": {
+    "manpower": 250,
+    "oil": 0,
+    "metal": 0
+  },
+  "recruitTime": 20,
+  "weapons": [
+    {
+      "weapon": "autocannon",
+      "mount": "armoured"
+    }
+  ],
+  "extraction": {
+    "mode": "haul",
+    "ratePerMinute": {
+      "oil": 15,
+      "metal": 30
+    },
+    "maxLoad": {
+      "oil": 10,
+      "metal": 15
+    }
+  }
+}

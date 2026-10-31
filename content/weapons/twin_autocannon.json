@@ -1,0 +1,11 @@
+{
+  "type": "weapon",
+  "id": "twin_autocannon",
+  "displayName": "Twin autocannon",
+  "range": 150,
+  "rateOfFire": 4,
+  "damage": 50,
+  "piercing": 10,
+  "projectileSpeed": 100,
+  "maxProjectileDistance": 200
+}

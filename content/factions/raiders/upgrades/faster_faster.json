@@ -1,0 +1,27 @@
+{
+  "type": "upgrade",
+  "id": "raiders_faster_faster",
+  "faction": "raiders",
+  "displayName": "Faster, Faster!",
+  "description": "All vehicles gain +10 top speed and +0.5 acceleration.",
+  "appliesTo": "faction",
+  "cost": {
+    "manpower": 700,
+    "oil": 30,
+    "metal": 20
+  },
+  "researchTime": 60,
+  "apply": "automatic",
+  "effects": [
+    {
+      "type": "addStat",
+      "stat": "topSpeed",
+      "amount": 10
+    },
+    {
+      "type": "addStat",
+      "stat": "acceleration",
+      "amount": 0.5
+    }
+  ]
+}

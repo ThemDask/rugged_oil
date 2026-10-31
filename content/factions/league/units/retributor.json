@@ -1,0 +1,35 @@
+{
+  "type": "unit",
+  "id": "league_retributor",
+  "faction": "league",
+  "displayName": "Retributor",
+  "role": "Heavy tank",
+  "isHq": false,
+  "sizeClass": "heavy",
+  "armour": {
+    "front": 70,
+    "side": 60,
+    "rear": 60
+  },
+  "health": 2500,
+  "spottingRange": 200,
+  "topSpeed": 20,
+  "acceleration": 2,
+  "rotationSpeed": 30,
+  "cost": {
+    "manpower": 700,
+    "oil": 50,
+    "metal": 100
+  },
+  "recruitTime": 35,
+  "weapons": [
+    {
+      "weapon": "peacemaker",
+      "mount": "turret"
+    },
+    {
+      "weapon": "twin_autocannon",
+      "mount": "armoured"
+    }
+  ]
+}

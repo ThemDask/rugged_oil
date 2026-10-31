@@ -1,0 +1,21 @@
+{
+  "type": "upgrade",
+  "id": "raiders_combat_raider",
+  "faction": "raiders",
+  "displayName": "Combat Raider",
+  "description": "The Raider gains +10 armour on all sides.",
+  "appliesTo": "raiders_raider",
+  "cost": {
+    "manpower": 300,
+    "oil": 0,
+    "metal": 20
+  },
+  "researchTime": 60,
+  "apply": "automatic",
+  "effects": [
+    {
+      "type": "addArmour",
+      "amount": 10
+    }
+  ]
+}

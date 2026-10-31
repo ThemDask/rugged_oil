@@ -1,0 +1,11 @@
+{
+  "type": "weapon",
+  "id": "peacemaker",
+  "displayName": "Peacemaker",
+  "range": 250,
+  "rateOfFire": 0.3,
+  "damage": 500,
+  "piercing": 50,
+  "projectileSpeed": 80,
+  "maxProjectileDistance": 300
+}

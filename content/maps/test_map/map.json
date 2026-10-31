@@ -2,20 +2,174 @@
   "type": "map",
   "id": "test_map",
   "displayName": "Test Map",
-  "description": "Small desert development map with a few rock formations.",
+  "description": "256 x 256 test map, point-symmetric.",
   "maxPlayers": 2,
-  "width": 64,
-  "height": 40,
-  "groundColor": "#b8945f",
+  "width": 256,
+  "height": 256,
+  "groundColor": "#c8955a",
   "obstacles": [
-    { "x": 28, "y": 15, "w": 8, "h": 10 },
-    { "x": 16, "y": 3, "w": 2, "h": 14 },
-    { "x": 45, "y": 23, "w": 2, "h": 14 },
-    { "x": 17, "y": 31, "w": 6, "h": 4 },
-    { "x": 41, "y": 5, "w": 6, "h": 4 }
+    {
+      "x": 40,
+      "y": 60,
+      "w": 12,
+      "h": 20,
+      "sprite": "obstacle_ruin"
+    },
+    {
+      "x": 40,
+      "y": 176,
+      "w": 12,
+      "h": 20,
+      "sprite": "obstacle_rock"
+    },
+    {
+      "x": 80,
+      "y": 110,
+      "w": 8,
+      "h": 36,
+      "sprite": "obstacle_ruin"
+    },
+    {
+      "x": 100,
+      "y": 24,
+      "w": 20,
+      "h": 10,
+      "sprite": "obstacle_rock"
+    },
+    {
+      "x": 100,
+      "y": 222,
+      "w": 20,
+      "h": 10,
+      "sprite": "obstacle_ruin"
+    },
+    {
+      "x": 204,
+      "y": 176,
+      "w": 12,
+      "h": 20,
+      "sprite": "obstacle_rock"
+    },
+    {
+      "x": 204,
+      "y": 60,
+      "w": 12,
+      "h": 20,
+      "sprite": "obstacle_ruin"
+    },
+    {
+      "x": 168,
+      "y": 110,
+      "w": 8,
+      "h": 36,
+      "sprite": "obstacle_rock"
+    },
+    {
+      "x": 136,
+      "y": 222,
+      "w": 20,
+      "h": 10,
+      "sprite": "obstacle_ruin"
+    },
+    {
+      "x": 136,
+      "y": 24,
+      "w": 20,
+      "h": 10,
+      "sprite": "obstacle_rock"
+    },
+    {
+      "x": 120,
+      "y": 120,
+      "w": 16,
+      "h": 16,
+      "sprite": "obstacle_ruin"
+    }
   ],
   "spawns": [
-    { "x": 6, "y": 20 },
-    { "x": 57, "y": 20 }
+    {
+      "x": 24,
+      "y": 128
+    },
+    {
+      "x": 231,
+      "y": 127
+    }
+  ],
+  "requisitionPoints": [
+    {
+      "x": 64,
+      "y": 40
+    },
+    {
+      "x": 64,
+      "y": 216
+    },
+    {
+      "x": 100,
+      "y": 128
+    },
+    {
+      "x": 128,
+      "y": 40
+    },
+    {
+      "x": 191,
+      "y": 215
+    },
+    {
+      "x": 191,
+      "y": 39
+    },
+    {
+      "x": 155,
+      "y": 127
+    },
+    {
+      "x": 127,
+      "y": 215
+    }
+  ],
+  "reserves": [
+    {
+      "x": 44,
+      "y": 96,
+      "resource": "oil"
+    },
+    {
+      "x": 44,
+      "y": 160,
+      "resource": "metal"
+    },
+    {
+      "x": 110,
+      "y": 60,
+      "resource": "oil"
+    },
+    {
+      "x": 100,
+      "y": 200,
+      "resource": "metal"
+    },
+    {
+      "x": 211,
+      "y": 159,
+      "resource": "oil"
+    },
+    {
+      "x": 211,
+      "y": 95,
+      "resource": "metal"
+    },
+    {
+      "x": 145,
+      "y": 195,
+      "resource": "oil"
+    },
+    {
+      "x": 155,
+      "y": 55,
+      "resource": "metal"
+    }
   ]
 }

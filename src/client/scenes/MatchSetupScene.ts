@@ -38,7 +38,7 @@ export class MatchSetupScene extends Phaser.Scene {
             // The AI takes another faction when there is one, else mirrors the player's.
             const aiFaction = factions.find((f) => f.id !== faction.id) ?? faction;
             const seed = Math.floor(Math.random() * 0x7fffffff);
-            this.scene.start('Match', { config: createSkirmish(maps[this.mapIndex].id, faction.id, aiFaction.id, seed) });
+            this.scene.start('Match', { config: createSkirmish(maps[this.mapIndex].id, faction.id, aiFaction.id, seed, gameData.rules.aiIncomeBonusPercent) });
         });
     }
 }

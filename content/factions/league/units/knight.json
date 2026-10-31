@@ -1,0 +1,31 @@
+{
+  "type": "unit",
+  "id": "league_knight",
+  "faction": "league",
+  "displayName": "Knight",
+  "role": "Medium tank",
+  "isHq": false,
+  "sizeClass": "medium",
+  "armour": {
+    "front": 50,
+    "side": 40,
+    "rear": 40
+  },
+  "health": 1500,
+  "spottingRange": 200,
+  "topSpeed": 25,
+  "acceleration": 2,
+  "rotationSpeed": 30,
+  "cost": {
+    "manpower": 300,
+    "oil": 20,
+    "metal": 30
+  },
+  "recruitTime": 15,
+  "weapons": [
+    {
+      "weapon": "peacemaker",
+      "mount": "turret"
+    }
+  ]
+}

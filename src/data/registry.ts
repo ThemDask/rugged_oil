@@ -1,14 +1,17 @@
-import type { ContentDef, FactionDef, GameRules, MapDef, UnitDef } from './types';
+import type { ContentDef, FactionDef, GameRules, MapDef, MountDef, UnitDef, UpgradeDef, WeaponDef } from './types';
 import { validateContent } from './validate';
 
 /**
  * Read-only registry of all static game data, indexed by id. Built once from the content files.
- * Usage: gameData.unit('a_base'), gameData.factions().
+ * Usage: gameData.unit('league_knight'), gameData.factions().
  */
 export class GameData {
     readonly rules: GameRules;
     private readonly factionMap = new Map<string, FactionDef>();
     private readonly unitMap = new Map<string, UnitDef>();
+    private readonly weaponMap = new Map<string, WeaponDef>();
+    private readonly mountMap = new Map<string, MountDef>();
+    private readonly upgradeMap = new Map<string, UpgradeDef>();
     private readonly mapMap = new Map<string, MapDef>();
 
     /** `files` maps a source path (for error messages) to its parsed JSON. */
@@ -27,6 +30,15 @@ export class GameData {
                     break;
                 case 'unit':
                     register(this.unitMap, def, path);
+                    break;
+                case 'weapon':
+                    register(this.weaponMap, def, path);
+                    break;
+                case 'mount':
+                    register(this.mountMap, def, path);
+                    break;
+                case 'upgrade':
+                    register(this.upgradeMap, def, path);
                     break;
                 case 'map':
                     register(this.mapMap, def, path);
@@ -47,6 +59,18 @@ export class GameData {
         return this.unitMap.get(id);
     }
 
+    weapon(id: string): WeaponDef | undefined {
+        return this.weaponMap.get(id);
+    }
+
+    mount(id: string): MountDef | undefined {
+        return this.mountMap.get(id);
+    }
+
+    upgrade(id: string): UpgradeDef | undefined {
+        return this.upgradeMap.get(id);
+    }
+
     map(id: string): MapDef | undefined {
         return this.mapMap.get(id);
     }
@@ -59,17 +83,46 @@ export class GameData {
         return [...this.unitMap.values()];
     }
 
+    weapons(): WeaponDef[] {
+        return [...this.weaponMap.values()];
+    }
+
+    mounts(): MountDef[] {
+        return [...this.mountMap.values()];
+    }
+
+    upgrades(): UpgradeDef[] {
+        return [...this.upgradeMap.values()];
+    }
+
     maps(): MapDef[] {
         return [...this.mapMap.values()];
     }
 
-    unitsOf(factionId: string): UnitDef[] {
-        return this.units().filter((u) => u.faction === factionId);
+    /** Like unit(), but throws for an unknown id. For code that runs after validation. */
+    requireUnit(id: string): UnitDef {
+        return required(this.unitMap, id, 'unit');
+    }
+
+    requireWeapon(id: string): WeaponDef {
+        return required(this.weaponMap, id, 'weapon');
+    }
+
+    requireMount(id: string): MountDef {
+        return required(this.mountMap, id, 'mount');
     }
 
     /** Human-readable problems with the content (empty = valid). */
     validate(): string[] {
-        return validateContent(this.rules, this.factions(), this.units(), this.maps());
+        return validateContent({
+            rules: this.rules,
+            factions: this.factions(),
+            units: this.units(),
+            weapons: this.weapons(),
+            mounts: this.mounts(),
+            upgrades: this.upgrades(),
+            maps: this.maps(),
+        });
     }
 }
 
@@ -77,4 +130,10 @@ function register<T extends { id: string }>(table: Map<string, T>, def: T, path:
     if (!def.id) throw new Error(`Definition without id: ${path}`);
     if (table.has(def.id)) throw new Error(`Duplicate id '${def.id}' in ${path}`);
     table.set(def.id, def);
+}
+
+function required<T>(table: Map<string, T>, id: string, kind: string): T {
+    const def = table.get(id);
+    if (!def) throw new Error(`Unknown ${kind} '${id}'`);
+    return def;
 }

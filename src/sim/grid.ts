@@ -25,7 +25,7 @@ export function cellCenter(cell: Vec): Vec {
     return { x: cell.x * UNITS_PER_TILE + half, y: cell.y * UNITS_PER_TILE + half };
 }
 
-/** Clearance a unit of `radius` (sim units) needs to fit on a tile. */
+/** Clearance a unit needs to fit on a tile, from its half-size in sim units (radius or half its width). */
 export function clearanceFor(radius: number): number {
     return Math.max(1, idiv(radius + UNITS_PER_TILE - 1, UNITS_PER_TILE));
 }

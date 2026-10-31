@@ -1,61 +1,86 @@
-import type { UnitDef } from '../data/types';
-import { ANGLE_STEPS, UNITS_PER_TILE, wrapAngle, type Vec } from './math';
-import { TICK_RATE } from './constants';
+import type { MountStats, UnitStats, WeaponStats } from '../data/convert';
+import type { Resources, SizeClass } from '../data/types';
+import { wrapAngle, type Vec } from './math';
+
+/** A unit's current order. The front of SimUnit.orders is the one being carried out. */
+export type Order =
+    | { type: 'move'; target: Vec }
+    | { type: 'attack'; targetId: number }
+    | { type: 'attackMove'; target: Vec }
+    | { type: 'capture'; pointId: number }
+    | { type: 'gather'; reserveId: number };
+
+/** One weapon on its mount. */
+export interface WeaponState {
+    weapon: WeaponStats;
+    mount: MountStats;
+    /** Mount angle relative to the hull, angle steps (0 = facing forward). */
+    mountAngle: number;
+    /** Ticks until it can fire again. */
+    cooldown: number;
+}
 
 /**
- * One unit's state in the simulation. Integers only: positions in sim units
- * (1 tile = UNITS_PER_TILE), heading in angle steps, speeds in sim units per tick.
+ * One unit's state in the simulation. Integers only: positions in sim units (1 tile = 1000),
+ * heading in angle steps, speed in sim units per tick ×ONE (fixed point).
  */
 export interface SimUnit {
     id: number;
     playerId: number;
     defId: string;
-    isBase: boolean;
+    isHq: boolean;
+    sizeClass: SizeClass;
 
     position: Vec;
     heading: number;
-    /** Speed along the heading, sim units per tick. */
-    speed: number;
+    /** Speed along the heading, sim units per tick ×ONE. */
+    speedFx: number;
+    /** Fraction of an angle step carried over between ticks (×ONE), so slow turn rates stay exact. */
+    turnCarry: number;
     health: number;
-    /** Remaining points to drive through. The last one is the destination. */
+    /** Remaining points of the current path. The last one is the destination. */
     waypoints: Vec[];
+    orders: Order[];
+    holdFire: boolean;
+    weapons: WeaponState[];
+    /** Per-unit upgrades applied to this unit. */
+    upgrades: string[];
+    /** League extractors: resources carried. */
+    load: Resources;
+    /** Marked when killed; removed at the end of the tick. */
+    dead: boolean;
 
     /** State at the previous tick, so views can interpolate smoothly between ticks. */
     previousPosition: Vec;
     previousHeading: number;
 
-    // Stats, converted from the UnitDef once at spawn.
-    maxHealth: number;
-    radius: number;
-    maxSpeed: number;
-    acceleration: number;
-    turnRate: number;
+    /** Effective stats: the unit type's stats plus active upgrade effects. */
+    stats: UnitStats;
 }
 
-/**
- * Creates a unit from its definition. Data is in tiles and seconds; it's converted once here to
- * integer sim units per tick. (The conversion uses plain arithmetic and Math.round, which are
- * exact and identical on every machine.)
- */
-export function createUnit(def: UnitDef, id: number, playerId: number, at: Vec, heading: number): SimUnit {
-    const perTick = UNITS_PER_TILE / TICK_RATE;
+/** Creates a unit from its converted stats, at full health and standing still. */
+export function createUnit(id: number, playerId: number, defId: string, isHq: boolean, sizeClass: SizeClass, stats: UnitStats, at: Vec, heading: number): SimUnit {
     const h = wrapAngle(heading);
     return {
         id,
         playerId,
-        defId: def.id,
-        isBase: def.isBase,
+        defId,
+        isHq,
+        sizeClass,
         position: { ...at },
         heading: h,
-        speed: 0,
-        health: def.maxHealth,
+        speedFx: 0,
+        turnCarry: 0,
+        health: stats.health,
         waypoints: [],
+        orders: [],
+        holdFire: false,
+        weapons: stats.weapons.map((w) => ({ weapon: w.weapon, mount: w.mount, mountAngle: 0, cooldown: 0 })),
+        upgrades: [],
+        load: {},
+        dead: false,
         previousPosition: { ...at },
         previousHeading: h,
-        maxHealth: def.maxHealth,
-        radius: Math.round(def.radius * UNITS_PER_TILE),
-        maxSpeed: Math.max(1, Math.round(def.moveSpeed * perTick)),
-        acceleration: Math.max(1, Math.round((def.acceleration * perTick) / TICK_RATE)),
-        turnRate: Math.max(1, Math.round((def.turnRate * ANGLE_STEPS) / 360 / TICK_RATE)),
+        stats,
     };
 }

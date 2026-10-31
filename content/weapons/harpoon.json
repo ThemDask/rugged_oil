@@ -1,0 +1,11 @@
+{
+  "type": "weapon",
+  "id": "harpoon",
+  "displayName": "Harpoon",
+  "range": 200,
+  "rateOfFire": 0.5,
+  "damage": 40,
+  "piercing": 60,
+  "projectileSpeed": 75,
+  "maxProjectileDistance": 300
+}

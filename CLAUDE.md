@@ -3,8 +3,7 @@
 A **top-down 2D RTS** on a post-apocalyptic desert Earth (Mad Max / dieselpunk), built with
 **Phaser 3 + TypeScript** (Vite, Vitest; desktop via Electron later). Slow, tactical gameplay.
 Skirmish, **1v1 vs AI** for now. **Multiplayer comes in a much later sprint via deterministic
-lockstep**, so the simulation is deterministic from day one
-(`docs/decisions/0005-deterministic-lockstep.md`).
+lockstep**, so the simulation is deterministic from day one (LLD section 2).
 
 **`docs/high-level-design.md` (the HLD) is the source of truth** for game rules, names and numbers
 (its appendix holds all unit, weapon, mount and upgrade stats). The user writes it. Follow its
@@ -18,9 +17,12 @@ playable. Three resources: **manpower** (infinite, from requisition points), **o
 **metal** (finite reserves, gathered by extractors). Very little automation: units never move on
 their own.
 
+The user provides the 2D art over time. Until then, everything visible (units, projectiles,
+reserves, obstacles, HUD symbols) uses placeholders with the same texture keys and sizes the real
+art will use, so art can be swapped in without code changes (LLD section 13).
+
 Content in `content/` is still a **placeholder** (`faction_a`) until it is rebuilt from the HLD
-appendix. The earlier space RTS concept is archived in `docs/archive/`, and the old Godot project
-is on the local branch `archive/godot`; neither is current.
+appendix. The old Godot project is on the local branch `archive/godot` and is not current.
 
 ## Commands
 
@@ -38,7 +40,7 @@ JSON file, and the architecture test enforces the determinism rules.
 
 ```
 docs/            high-level-design.md (HLD: what the game is), low-level-design.md (LLD: how
-                 it's built), roadmap.md, images/, decisions/ (ADRs), archive/ (not current)
+                 it's built), roadmap.md, images/
 src/sim/         THE simulation: all game state, fixed tick, integer maths. No Phaser.
 src/data/        content types, GameData registry, validator, unit conversion. No Phaser.
 src/setup/       MatchConfig + PlayerSlot. No Phaser.
@@ -94,6 +96,6 @@ electron/        desktop wrapper boilerplate (not wired up yet)
 
 - Design questions (unit roles, numbers, rules) belong to the user: ask instead of inventing
   answers. Keep follow-up questions few and only for real blockers.
-- Update the LLD when a change alters architecture or data formats. Record significant decisions
-  as a new ADR in `docs/decisions/`.
+- Update the LLD when a change alters architecture or data formats, including significant
+  technical decisions and why they were made.
 - Don't commit `dist/` or `node_modules/`.
