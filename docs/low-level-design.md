@@ -319,22 +319,35 @@ player and the match ends.
 
 ## 11. Economy, production and upgrades
 
-**Resources** are integers per player: manpower, oil, metal.
+**Resources** are integers per player: manpower, oil, metal (`sim/economy.ts`).
 
-- **Manpower** income per second = base + per held requisition point + the AI bonus (from
-  `MatchConfig`). It's added once per second (every 20 ticks) to avoid fractions.
-- **Requisition points:** each tick, sum the capture weight (light 1, medium 2, heavy 5) of units
-  inside the square **with a capture order**, per side. The heavier side progresses at speed
-  `1 + (weight difference − 1) ÷ 9` in fixed point. An enemy-owned point is first neutralised,
-  then captured. Without capturers, progress decays for 10 seconds, then drops to zero.
-- **Reserves:** amount left per reserve. **Raiders** extractors move the resource from the
-  reserve straight to the player at their rate. **League** extractors fill their load at their
-  rate up to a maximum load (from data), then stop extracting until they deliver it by touching
-  the HQ. Rates are stored as fixed-point amounts per tick.
+- **Exact fractions:** income that isn't a whole number per tick (10 manpower/s is 0.5 per tick,
+  12.5/s with the AI bonus, 15 oil per minute) is kept in `player.carry`, in units of
+  1/120 000 of a resource, and credited as soon as it adds up to a whole unit. Nothing is
+  rounded away.
+- **Manpower** income per second = base income + `incomePerPoint` per held requisition point,
+  plus the player's income bonus (the AI's +25%, from `MatchConfig`). The bonus also applies to
+  extracted oil and metal.
+- **Requisition points** (`sim/capture.ts`): each tick, sum the capture weight (light 1, medium 2,
+  heavy 5) of units inside the square **with a capture order**, per side. The heavier side
+  progresses at `1 + (weight difference − 1) ÷ 9` per tick (fixed point); equal sides pause.
+  Progress made by another side is worn down first, and the owner wears down an attacker's
+  progress. An enemy-owned point is first neutralised, then captured. Without capturers,
+  progress decays at a quarter of the weight-1 speed for 10 seconds, then drops to zero. A
+  capture order ends once the point is held, so queued orders continue.
+- **Extraction:** a gather order goes `toReserve` → `extracting` (inside the reserve's square)
+  → for hauling extractors `toHq` and back. Rates are per minute, accumulated exactly per
+  extractor. **Raiders** extractors credit each whole unit straight to the player. **League**
+  extractors fill their load up to `maxLoad`, then drive to the HQ (re-aiming every 2 s, as the
+  HQ may move) and deliver on touching it. A hauler that dies loses its load. When a reserve
+  runs out, extractors stop where they are; a hauler first delivers what it carries.
 
-**Production:** the HQ has one queue (max 5). `recruit` checks resources and population and pays
-immediately; the front entry counts down; when it reaches zero, the unit spawns next to the HQ.
-`cancelRecruit` refunds the full cost.
+**Production** (`sim/production.ts`): the HQ has one queue (max 5). `recruit` checks the
+faction's unit list, resources, queue size and population (queued units count) and pays
+immediately; the front entry counts down; when it reaches zero, the unit spawns next to the HQ,
+clear of its footprint, trying behind it first, then the sides, then the front (it waits if all
+spots are blocked). `cancelRecruit` refunds the full cost. The HUD shows the queue above the
+advanced actions while the HQ is selected; clicking an entry cancels it.
 
 **Upgrades** are data with a small, fixed set of effect types, so no upgrade needs its own code:
 

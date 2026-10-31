@@ -1,14 +1,18 @@
 import { unitStats, type UnitStats } from '../data/convert';
 import type { GameData } from '../data/registry';
-import { compareCommands, isValidCommand, type AttackMoveCommand, type Command, type HoldFireCommand, type MoveCommand, type StopCommand } from './commands';
+import { stepCapture } from './capture';
+import { compareCommands, isValidCommand, type AttackMoveCommand, type CaptureCommand, type Command, type GatherCommand, type HoldFireCommand, type MoveCommand, type StopCommand } from './commands';
+import { stepEconomy } from './economy';
 import { formationBlock, spacingFor } from './formation';
 import type { SimGrid } from './grid';
-import type { Vec } from './math';
+import { metres } from '../data/convert';
+import { clamp, idiv, type Vec } from './math';
 import { stepMovement } from './movement';
 import { giveOrder, stepOrders } from './orders';
+import { cancelRecruit, recruit, stepProduction } from './production';
 import { SimRng } from './rng';
 import type { PlayerState, SimProjectile, SimReqPoint, SimReserve } from './state';
-import { stepCapture, stepCombat, stepEconomy, stepProduction, stepProjectiles, stepVisibility } from './systems';
+import { stepCombat, stepProjectiles, stepVisibility } from './systems';
 import { createUnit, type SimUnit } from './unit';
 
 /**
@@ -50,6 +54,7 @@ export class SimWorld {
             id,
             faction,
             resources: Object.fromEntries(rules.resources.map((r) => [r, rules.startingResources[r] ?? 0])),
+            carry: Object.fromEntries(rules.resources.map((r) => [r, 0])),
             incomeBonusPercent,
             population: 0,
             queue: [],
@@ -72,13 +77,14 @@ export class SimWorld {
         return stats;
     }
 
-    spawnUnit(defId: string, playerId: number, at: Vec, heading = 0): SimUnit {
+    /** Spawns a unit. Recruited units already counted their population when queued (`countPopulation` false). */
+    spawnUnit(defId: string, playerId: number, at: Vec, heading = 0, countPopulation = true): SimUnit {
         const def = this.data.requireUnit(defId);
         const stats = this.unitStatsOf(defId);
         const unit = createUnit(this.nextId++, playerId, defId, def.isHq, def.sizeClass, stats, at, heading);
         this.units.set(unit.id, unit);
         const player = this.players.get(playerId);
-        if (player) player.population += stats.population;
+        if (player && countPopulation) player.population += stats.population;
         return unit;
     }
 
@@ -123,7 +129,7 @@ export class SimWorld {
         stepCapture(this);
         stepVisibility(this);
         const units = [...this.units.values()];
-        stepOrders(units, this.grid);
+        stepOrders(this, units);
         stepMovement(units, this.grid);
         stepCombat(this);
         stepProjectiles(this);
@@ -136,11 +142,13 @@ export class SimWorld {
         h = mix(h, this.rng.getState());
         h = mix(h, this.winner);
         for (const p of this.players.values()) {
-            for (const r of this.data.rules.resources) h = mix(h, p.resources[r] ?? 0);
+            for (const r of this.data.rules.resources) h = mix(mix(h, p.resources[r] ?? 0), p.carry[r] ?? 0);
+            for (const e of p.queue) h = mix(h, e.ticksLeft);
             for (const v of [p.id, p.population, p.queue.length, p.researched.length, p.defeated ? 1 : 0]) h = mix(h, v);
         }
         for (const u of this.units.values()) {
-            for (const v of [u.id, u.playerId, u.position.x, u.position.y, u.heading, u.speedFx, u.health, u.orders.length]) h = mix(h, v);
+            for (const v of [u.id, u.playerId, u.position.x, u.position.y, u.heading, u.speedFx, u.health, u.orders.length, u.extractCarry]) h = mix(h, v);
+            for (const r of Object.keys(u.load).sort()) h = mix(h, u.load[r]);
         }
         for (const p of this.projectiles.values()) {
             for (const v of [p.id, p.position.x, p.position.y, p.distanceLeft]) h = mix(h, v);
@@ -168,8 +176,20 @@ export class SimWorld {
                 case 'holdFire':
                     this.executeHoldFire(command);
                     break;
-                // attack, capture, gather, recruit, cancelRecruit, research and applyUpgrade
-                // are accepted but have no effect until M4-M6 implement them.
+                case 'capture':
+                    this.executeCapture(command);
+                    break;
+                case 'gather':
+                    this.executeGather(command);
+                    break;
+                case 'recruit':
+                    recruit(this, command);
+                    break;
+                case 'cancelRecruit':
+                    cancelRecruit(this, command);
+                    break;
+                // attack, research and applyUpgrade are accepted but have no effect until M5
+                // and M6 implement them.
             }
         }
     }
@@ -188,7 +208,31 @@ export class SimWorld {
         if (group.length === 0) return;
         const largest = Math.max(...group.map((u) => u.stats.radius));
         const targets = formationBlock(command.target, group.length, spacingFor(largest));
-        group.forEach((unit, i) => giveOrder(this.grid, unit, { type: command.type, target: targets[i] }, command.queue === true));
+        group.forEach((unit, i) => giveOrder(this, unit, { type: command.type, target: targets[i] }, command.queue === true));
+    }
+
+    /** Capture: the group spreads out inside the point's square. */
+    private executeCapture(command: CaptureCommand): void {
+        const point = this.reqPoints.get(command.pointId);
+        const group = this.ownUnits(command);
+        if (!point || group.length === 0) return;
+        const half = idiv(metres(this.data.rules.capture.areaSize), 2) - 100;
+        const largest = Math.max(...group.map((u) => u.stats.radius));
+        const targets = formationBlock(point.position, group.length, spacingFor(largest)).map((t) => ({
+            x: clamp(t.x, point.position.x - half, point.position.x + half),
+            y: clamp(t.y, point.position.y - half, point.position.y + half),
+        }));
+        group.forEach((unit, i) => giveOrder(this, unit, { type: 'capture', pointId: point.id, target: targets[i] }, command.queue === true));
+    }
+
+    /** Gather: only extractors take the order. */
+    private executeGather(command: GatherCommand): void {
+        const reserve = this.reserves.get(command.reserveId);
+        if (!reserve) return;
+        for (const unit of this.ownUnits(command)) {
+            if (!unit.stats.extraction) continue;
+            giveOrder(this, unit, { type: 'gather', reserveId: reserve.id, phase: 'toReserve' }, command.queue === true);
+        }
     }
 
     private executeStop(command: StopCommand): void {

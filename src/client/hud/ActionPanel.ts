@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import type { GameData } from '../../data/registry';
 import type { Resources } from '../../data/types';
+import { canAfford } from '../../sim/production';
+import type { PlayerState } from '../../sim/state';
 import type { SimUnit } from '../../sim/unit';
 import type { IconKey } from '../placeholders';
 import { THEME, textStyle } from '../ui/theme';
@@ -24,6 +26,8 @@ export interface ActionHandlers {
 
 interface ButtonSpec {
     texture?: string;
+    /** Recruit buttons: the unit, so the button can be dimmed when it can't be recruited. */
+    unitDefId?: string;
     label?: string;
     tooltip: string;
     onClick: () => void;
@@ -36,7 +40,7 @@ interface ButtonSpec {
  * button does and costs.
  */
 export class ActionPanel {
-    private advanced: Phaser.GameObjects.Container[] = [];
+    private advanced: { button: Phaser.GameObjects.Container; spec: ButtonSpec }[] = [];
     private advancedFor: string | null = null;
     private readonly tooltip: Phaser.GameObjects.Text;
     private readonly basicButtons: Phaser.GameObjects.Container[];
@@ -53,12 +57,23 @@ export class ActionPanel {
     }
 
     /** `unit` is the first selected unit of the local player, if any. */
-    update(unit: SimUnit | undefined, faction: string, color: number): void {
+    update(unit: SimUnit | undefined, player: PlayerState, color: number): void {
         for (const b of this.basicButtons) b.setVisible(unit !== undefined);
         const key = unit ? unit.defId : null;
-        if (key === this.advancedFor) return;
+        if (key !== this.advancedFor) this.rebuild(unit, player.faction, color);
         this.advancedFor = key;
-        for (const b of this.advanced) b.destroy();
+        const rules = this.data.rules;
+        for (const { button, spec } of this.advanced) {
+            if (!spec.unitDefId) continue;
+            const def = this.data.requireUnit(spec.unitDefId);
+            const pop = rules.sizeClasses[def.sizeClass].population;
+            const ok = canAfford(player, def.cost) && player.population + pop <= rules.populationCap && player.queue.length < rules.productionQueueSize;
+            button.setAlpha(ok ? 1 : 0.4);
+        }
+    }
+
+    private rebuild(unit: SimUnit | undefined, faction: string, color: number): void {
+        for (const { button } of this.advanced) button.destroy();
         this.advanced = [];
         if (!unit?.isHq) return;
 
@@ -66,7 +81,7 @@ export class ActionPanel {
         const f = this.data.faction(faction)!;
         for (const id of f.units) {
             const def = this.data.requireUnit(id);
-            specs.push({ texture: id, tooltip: `Recruit ${def.displayName}: ${costText(def.cost)}, ${def.recruitTime} s`, onClick: () => this.handlers.recruit(id) });
+            specs.push({ texture: id, unitDefId: id, tooltip: `Recruit ${def.displayName}: ${costText(def.cost)}, ${def.recruitTime} s`, onClick: () => this.handlers.recruit(id) });
         }
         for (const id of f.upgrades) {
             const up = this.data.upgrade(id)!;
@@ -74,10 +89,10 @@ export class ActionPanel {
         }
         const { advanced, button, gap } = this.layout;
         const cells = buttonGrid(advanced, 6, 2, button, gap);
-        this.advanced = specs.slice(0, cells.length).map((s, i) => {
-            const b = this.button(cells[i].x, cells[i].y, s);
-            if (s.texture) (b.list[1] as Phaser.GameObjects.Image).setTint(color);
-            return b;
+        this.advanced = specs.slice(0, cells.length).map((spec, i) => {
+            const button = this.button(cells[i].x, cells[i].y, spec);
+            if (spec.texture) (button.list[1] as Phaser.GameObjects.Image).setTint(color);
+            return { button, spec };
         });
     }
 

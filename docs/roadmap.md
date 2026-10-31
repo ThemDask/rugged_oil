@@ -31,11 +31,11 @@ numbers come from `high-level-design.md` (HLD); how they're built is in `low-lev
       click-to-move-camera
 - **Done when:** the HQ and debug-spawned units drive around the map comfortably.
 
-## M4: Economy and production
-- [ ] Player state: manpower, oil, metal, population
-- [ ] Manpower income; requisition capture (weights, neutralise, contested, decay)
-- [ ] Reserves and extraction: League hauling with max loads, Raiders gathering on the spot
-- [ ] Production: recruit buttons, pay at queue time, queue of 5, cancel with refund, population
+## M4: Economy and production ✅
+- [x] Player state: manpower, oil, metal, population
+- [x] Manpower income; requisition capture (weights, neutralise, contested, decay)
+- [x] Reserves and extraction: League hauling with max loads, Raiders gathering on the spot
+- [x] Production: recruit buttons, pay at queue time, queue of 5, cancel with refund, population
       cap, spawn in a free spot; live top bar
 - **Done when:** the economy loop (capture, extract, recruit) is playable with both factions.
 

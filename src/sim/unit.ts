@@ -7,8 +7,11 @@ export type Order =
     | { type: 'move'; target: Vec }
     | { type: 'attack'; targetId: number }
     | { type: 'attackMove'; target: Vec }
-    | { type: 'capture'; pointId: number }
-    | { type: 'gather'; reserveId: number };
+    | { type: 'capture'; pointId: number; target: Vec }
+    | { type: 'gather'; reserveId: number; phase: GatherPhase };
+
+/** Where an extractor is in its gather cycle. 'toHq' is only used by hauling (League) extractors. */
+export type GatherPhase = 'toReserve' | 'extracting' | 'toHq';
 
 /** One weapon on its mount. */
 export interface WeaponState {
@@ -47,6 +50,8 @@ export interface SimUnit {
     upgrades: string[];
     /** League extractors: resources carried. */
     load: Resources;
+    /** Extraction progress toward the next whole unit of resource, in 1/TICKS_PER_MINUTE units. */
+    extractCarry: number;
     /** Marked when killed; removed at the end of the tick. */
     dead: boolean;
 
@@ -78,6 +83,7 @@ export function createUnit(id: number, playerId: number, defId: string, isHq: bo
         weapons: stats.weapons.map((w) => ({ weapon: w.weapon, mount: w.mount, mountAngle: 0, cooldown: 0 })),
         upgrades: [],
         load: {},
+        extractCarry: 0,
         dead: false,
         previousPosition: { ...at },
         previousHeading: h,

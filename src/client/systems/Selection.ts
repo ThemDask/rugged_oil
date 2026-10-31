@@ -1,4 +1,7 @@
 import Phaser from 'phaser';
+import { insideCaptureArea } from '../../sim/capture';
+import { insideReserve } from '../../sim/economy';
+import type { SimWorld } from '../../sim/world';
 import { pxToSim } from '../scale';
 import { THEME } from '../ui/theme';
 import type { UnitView } from '../views/UnitView';
@@ -16,7 +19,8 @@ export type TargetingOrder = 'move' | 'attackMove';
 /**
  * Mouse and keyboard control for the human player (HLD "Controls"):
  * - left-click selects a unit, left-drag selects with a box, Shift adds to the selection;
- * - right-click orders the selection to move; Shift + right-click queues the order;
+ * - right-click gives the default order: capture on a requisition point, gather on a reserve
+ *   (extractors only; the others move there), otherwise move. Shift + right-click queues it;
  * - after the Move or Attack-move button, the next left-click picks the target (right-click or
  *   Esc cancels);
  * - Ctrl + 1-9 assigns a control group, 1-9 selects it, pressing it twice centres the camera.
@@ -36,6 +40,7 @@ export class Selection {
         private readonly playerId: number,
         private readonly views: Map<number, UnitView>,
         private readonly bridge: CommandBridge,
+        private readonly world: SimWorld,
         private readonly centerCamera: (x: number, y: number) => void,
     ) {
         this.box = scene.add.graphics().setDepth(100);
@@ -48,7 +53,7 @@ export class Selection {
                 return;
             }
             if (p.leftButtonDown()) this.dragStart = { worldX: p.worldX, worldY: p.worldY, x: p.x, y: p.y };
-            else if (p.rightButtonDown()) this.order('move', p.worldX, p.worldY, p.event.shiftKey);
+            else if (p.rightButtonDown()) this.defaultOrder(p.worldX, p.worldY, p.event.shiftKey);
         });
         scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
             if (this.dragStart) this.drawBox(p);
@@ -117,6 +122,29 @@ export class Selection {
     private order(type: TargetingOrder, worldX: number, worldY: number, queue: boolean): void {
         if (this.selected.length === 0) return;
         this.bridge.issue({ type, playerId: this.playerId, unitIds: this.selected.map((v) => v.id), target: pxToSim(worldX, worldY), queue });
+    }
+
+    /** Right-click: capture a point, gather from a reserve, or move. */
+    private defaultOrder(worldX: number, worldY: number, queue: boolean): void {
+        if (this.selected.length === 0) return;
+        const at = pxToSim(worldX, worldY);
+        const playerId = this.playerId;
+        const unitIds = this.selected.map((v) => v.id);
+        for (const point of this.world.reqPoints.values()) {
+            if (insideCaptureArea(this.world, point, at)) {
+                this.bridge.issue({ type: 'capture', playerId, unitIds, pointId: point.id, queue });
+                return;
+            }
+        }
+        for (const reserve of this.world.reserves.values()) {
+            if (reserve.amountLeft <= 0 || !insideReserve(this.world, reserve, at)) continue;
+            const extractors = this.selected.filter((v) => v.unit.stats.extraction).map((v) => v.id);
+            if (extractors.length > 0) this.bridge.issue({ type: 'gather', playerId, unitIds: extractors, reserveId: reserve.id, queue });
+            const others = unitIds.filter((id) => !extractors.includes(id));
+            if (others.length > 0) this.bridge.issue({ type: 'move', playerId, unitIds: others, target: at, queue });
+            return;
+        }
+        this.order('move', worldX, worldY, queue);
     }
 
     private assignGroup(n: number): void {

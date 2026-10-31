@@ -69,7 +69,7 @@ export class MatchScene extends Phaser.Scene {
         for (const unit of this.world.units.values()) {
             this.views.set(unit.id, new UnitView(this, unit, this.config.players[unit.playerId].color));
         }
-        this.selection = new Selection(this, humanId, this.views, this.bridge, (x, y) => this.camera.centerOn(x, y));
+        this.selection = new Selection(this, humanId, this.views, this.bridge, this.world, (x, y) => this.camera.centerOn(x, y));
         this.orderLines = new OrderLinesView(this, this.world, this.selection);
         if (import.meta.env.DEV) this.input.keyboard!.on('keydown-F2', () => this.devSpawnArmy());
 

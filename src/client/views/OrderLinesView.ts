@@ -30,7 +30,7 @@ export class OrderLinesView {
         for (const view of this.selection.selected) {
             let from = { x: view.x, y: view.y };
             for (const order of view.unit.orders) {
-                const target = this.targetOf(order);
+                const target = this.targetOf(order, view.unit.playerId);
                 if (!target) continue;
                 const to = simToPx(target);
                 g.lineStyle(1, COLORS[order.type], 0.9).lineBetween(from.x, from.y, to.x, to.y);
@@ -40,7 +40,7 @@ export class OrderLinesView {
         }
     }
 
-    private targetOf(order: Order): Vec | undefined {
+    private targetOf(order: Order, playerId: number): Vec | undefined {
         switch (order.type) {
             case 'move':
             case 'attackMove':
@@ -50,6 +50,8 @@ export class OrderLinesView {
             case 'capture':
                 return this.world.reqPoints.get(order.pointId)?.position;
             case 'gather':
+                // A hauler on its way to deliver points at the HQ.
+                if (order.phase === 'toHq') return this.world.hqOf(playerId)?.position;
                 return this.world.reserves.get(order.reserveId)?.position;
         }
     }

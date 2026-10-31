@@ -4,6 +4,7 @@ import { gameData } from '../gameData';
 import { ActionPanel, type BasicAction } from '../hud/ActionPanel';
 import { hudLayout } from '../hud/layout';
 import { Minimap } from '../hud/Minimap';
+import { ProductionQueue } from '../hud/ProductionQueue';
 import { TopBar } from '../hud/TopBar';
 import { UnitInspector } from '../hud/UnitInspector';
 import { hexColor } from '../scale';
@@ -25,6 +26,7 @@ export class HudScene extends Phaser.Scene {
     private inspector!: UnitInspector;
     private actions!: ActionPanel;
     private minimap!: Minimap;
+    private queue!: ProductionQueue;
     private menu: PauseMenu | null = null;
     private ended = false;
 
@@ -47,6 +49,9 @@ export class HudScene extends Phaser.Scene {
             recruit: (unitDefId) => this.issue({ type: 'recruit', playerId: match.humanId, unitDefId }),
             research: (upgradeId) => this.issue({ type: 'research', playerId: match.humanId, upgradeId }),
         });
+        this.queue = new ProductionQueue(this, layout.advanced, gameData.rules.productionQueueSize, match.world, (index) =>
+            this.issue({ type: 'cancelRecruit', playerId: match.humanId, index }),
+        );
         this.minimap = new Minimap(this, layout.minimap, map, match.world, match.humanId, (x, y) => match.camera.centerOn(x, y));
         this.debug = new DebugOverlay(this);
 
@@ -64,7 +69,8 @@ export class HudScene extends Phaser.Scene {
 
         this.topBar.update(player);
         this.inspector.update(first, color);
-        this.actions.update(first, player.faction, color);
+        this.actions.update(first, player, color);
+        this.queue.update(first?.isHq ? player : undefined, color);
         this.minimap.update(delta, match.cameras.main.worldView);
         this.debug.update(this.game, world, match.selection.selected.length);
 

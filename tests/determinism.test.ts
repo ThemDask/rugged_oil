@@ -11,7 +11,10 @@ import { createWorld } from '../src/sim/setup';
  */
 const data = loadGameData();
 const config = createSkirmish('test_map', 'league', 'raiders', 12345, data.rules.aiIncomeBonusPercent);
-const [hq0, hq1] = [0, 1].map((p) => createWorld(config, data).hqOf(p)!.id);
+const start = createWorld(config, data);
+const [hq0, hq1] = [0, 1].map((p) => start.hqOf(p)!.id);
+const [point0] = [...start.reqPoints.keys()];
+const [reserve0] = [...start.reserves.keys()];
 
 /** A scripted match: both HQs get several orders at different ticks. */
 const script: Command[] = [
@@ -20,6 +23,14 @@ const script: Command[] = [
     { type: 'move', playerId: 0, unitIds: [hq0, hq1], target: cellCenter({ x: 90, y: 180 }), tick: 300 },
     { type: 'stop', playerId: 1, unitIds: [hq1], tick: 400 },
     { type: 'move', playerId: 1, unitIds: [hq1], target: cellCenter({ x: 170, y: 90 }), tick: 450 },
+    // Economy: both recruit extractors and units, one cancels, HQ 0 queues a capture.
+    { type: 'recruit', playerId: 0, unitDefId: 'league_lifeline', tick: 2 },
+    { type: 'recruit', playerId: 1, unitDefId: 'raiders_gatherer', tick: 2 },
+    { type: 'recruit', playerId: 1, unitDefId: 'raiders_spotter', tick: 3 },
+    { type: 'cancelRecruit', playerId: 1, index: 1, tick: 4 },
+    { type: 'capture', playerId: 0, unitIds: [hq0], pointId: point0, queue: true, tick: 600 },
+    // The Lifeline is the second unit spawned in the match (the Raiders' Gatherer finishes first).
+    { type: 'gather', playerId: 0, unitIds: [hq1 + 2], reserveId: reserve0, tick: 700 },
 ];
 
 function play(ticks: number): number[] {
@@ -38,6 +49,16 @@ describe('determinism', () => {
         const a = play(1200);
         const b = play(1200);
         expect(a).toEqual(b);
+    });
+
+    it('the scripted economy happens: recruits spawn and the Lifeline gathers', () => {
+        const world = createWorld(config, data);
+        for (const command of script) world.schedule(structuredClone(command));
+        for (let i = 0; i < 1200; i++) world.step();
+        const lifeline = world.units.get(hq1 + 2)!;
+        expect(lifeline.defId).toBe('league_lifeline');
+        expect(lifeline.orders[0]?.type).toBe('gather');
+        expect(world.players.get(1)!.queue).toEqual([]);
     });
 
     it('a different command changes the outcome', () => {

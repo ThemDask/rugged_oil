@@ -23,7 +23,7 @@ export class UnitInspector {
     private readonly iconSize: number;
     private readonly barX: number;
     private readonly barWidth: number;
-    private shown: { id: number; health: number } | null = null;
+    private shown: { id: number; health: number; load: string } | null = null;
 
     constructor(scene: Phaser.Scene, r: Rect, private readonly data: GameData) {
         this.iconSize = r.h - 2 * PAD;
@@ -51,18 +51,19 @@ export class UnitInspector {
             this.shown = null;
             return;
         }
-        if (this.shown?.id === unit.id && this.shown.health === unit.health) return;
+        const load = Object.entries(unit.load).filter(([, n]) => n > 0).map(([res, n]) => `${n} ${res}`).join(', ');
+        if (this.shown?.id === unit.id && this.shown.health === unit.health && this.shown.load === load) return;
         if (this.shown?.id !== unit.id) {
             const def = this.data.requireUnit(unit.defId);
             this.icon.setTexture(unit.defId).setTint(color);
             this.icon.setScale(this.iconSize / Math.max(this.icon.width, this.icon.height));
-            this.name.setText(def.displayName);
             const a = unit.stats.armour;
             this.stats[0].setText(`${a.front} / ${a.side} / ${a.rear}`);
             this.stats[1].setText(`${def.topSpeed} m/s`);
             this.stats[2].setText(`${def.spottingRange} m`);
         }
-        this.shown = { id: unit.id, health: unit.health };
+        this.name.setText(this.data.requireUnit(unit.defId).displayName + (load ? `  (carrying ${load})` : ''));
+        this.shown = { id: unit.id, health: unit.health, load };
         const max = unit.stats.health;
         const barY = PAD + 40;
         this.hp.setText(`HP ${unit.health} / ${max}`);

@@ -17,6 +17,8 @@ export interface PlayerState {
     id: number;
     faction: string;
     resources: Resources;
+    /** Fractions of a resource not yet credited, in 1/INCOME_FRACTION units (see economy.ts). */
+    carry: Resources;
     /** Extra percent on all resource income (the AI's cheat). */
     incomeBonusPercent: number;
     /** Population used by living units and queued units. */
