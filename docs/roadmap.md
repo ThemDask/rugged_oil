@@ -23,7 +23,7 @@ See `decisions/0005-deterministic-lockstep.md`.
 - [x] Settings modal: Audio, Video, Input (`ui/SettingsDialog`), saved in localStorage
 - [x] Esc modal in matches with Exit, back to main menu (`ui/PauseMenu`, `HudScene`)
 - [x] Desert placeholder look for the test map
-- [ ] Settings content decided (design.md, "Match and options" questions); audio buses once
+- [ ] Settings content (the HLD's Settings buttons do nothing for now); audio buses once
       there is audio; key rebinding if wanted
 
 ## M3: Base vehicle

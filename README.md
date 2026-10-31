@@ -12,6 +12,6 @@ npm test
 
 - Controls: left-click / drag to select, Shift to add, right-click to move. Camera: WASD/arrows,
   screen edges, middle-drag, mouse wheel to zoom. Esc: menu.
-- Docs: [design](docs/design.md) · [architecture](docs/architecture.md) · [data](docs/data.md) · [roadmap](docs/roadmap.md)
+- Docs: [high-level design](docs/high-level-design.md) · [low-level design](docs/low-level-design.md) · [roadmap](docs/roadmap.md)
 
 An earlier space RTS concept is archived in [docs/archive/](docs/archive/space-rts-design.md).
